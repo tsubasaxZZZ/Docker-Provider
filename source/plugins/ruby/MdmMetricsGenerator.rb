@@ -173,7 +173,8 @@ class MdmMetricsGenerator
                                                                     Constants::CPU_USAGE_NANO_CORES,
                                                                     0,
                                                                     container_zero_fill_dims,
-                                                                    metric_threshold_hash[Constants::CPU_USAGE_NANO_CORES])
+                                                                    metric_threshold_hash[Constants::CPU_USAGE_NANO_CORES],
+                                                                    true)
         if !containerCpuRecords.nil? && !containerCpuRecords.empty?
           containerCpuRecords.each { |cpuRecord|
             if !cpuRecord.nil? && !cpuRecord.empty?
@@ -185,7 +186,8 @@ class MdmMetricsGenerator
                                                                           Constants::MEMORY_RSS_BYTES,
                                                                           0,
                                                                           container_zero_fill_dims,
-                                                                          metric_threshold_hash[Constants::MEMORY_RSS_BYTES])
+                                                                          metric_threshold_hash[Constants::MEMORY_RSS_BYTES],
+                                                                          true)
         if !containerMemoryRssRecords.nil? && !containerMemoryRssRecords.empty?
           containerMemoryRssRecords.each { |memoryRssRecord|
             if !memoryRssRecord.nil? && !memoryRssRecord.empty?
@@ -197,7 +199,8 @@ class MdmMetricsGenerator
                                                                                  Constants::MEMORY_WORKING_SET_BYTES,
                                                                                  0,
                                                                                  container_zero_fill_dims,
-                                                                                 metric_threshold_hash[Constants::MEMORY_WORKING_SET_BYTES])
+                                                                                 metric_threshold_hash[Constants::MEMORY_WORKING_SET_BYTES],
+                                                                                 true)
         if !containerMemoryWorkingSetRecords.nil? && !containerMemoryWorkingSetRecords.empty?
           containerMemoryWorkingSetRecords.each { |workingSetRecord|
             if !workingSetRecord.nil? && !workingSetRecord.empty?
@@ -215,7 +218,8 @@ class MdmMetricsGenerator
                                                                      @@hostName,
                                                                      0,
                                                                      pvZeroFillDims,
-                                                                     metric_threshold_hash[Constants::PV_USED_BYTES])
+                                                                     metric_threshold_hash[Constants::PV_USED_BYTES],
+                                                                     true)
         if !pvResourceUtilMetricRecords.nil? && !pvResourceUtilMetricRecords.empty?
           pvResourceUtilMetricRecords.each { |pvRecord|
             if !pvRecord.nil? && !pvRecord.empty?
@@ -274,7 +278,7 @@ class MdmMetricsGenerator
       return records
     end
 
-    def getContainerResourceUtilMetricRecords(recordTimeStamp, metricName, percentageMetricValue, dims, thresholdPercentage)
+    def getContainerResourceUtilMetricRecords(recordTimeStamp, metricName, percentageMetricValue, dims, thresholdPercentage, isZeroFill = false)
       records = []
       begin
         if dims.nil?
@@ -312,7 +316,7 @@ class MdmMetricsGenerator
           podNameDimValue: podName,
           controllerNameDimValue: controllerName,
           namespaceDimValue: podNamespace,
-          containerResourceThresholdViolated: 1,
+          containerResourceThresholdViolated: isZeroFill ? 0 : 1,
           thresholdPercentageDimValue: thresholdPercentage,
         }
         records.push(Yajl::Parser.parse(StringIO.new(resourceThresholdViolatedRecord)))
@@ -323,7 +327,7 @@ class MdmMetricsGenerator
       return records
     end
 
-    def getPVResourceUtilMetricRecords(recordTimeStamp, metricName, computer, percentageMetricValue, dims, thresholdPercentage)
+    def getPVResourceUtilMetricRecords(recordTimeStamp, metricName, computer, percentageMetricValue, dims, thresholdPercentage, isZeroFill = false)
       records = []
       begin
         containerName = dims[Constants::INSIGHTSMETRICS_TAGS_CONTAINER_NAME]
@@ -352,7 +356,7 @@ class MdmMetricsGenerator
           computerNameDimValue: computer,
           namespaceDimValue: pvcNamespace,
           volumeNameDimValue: volumeName,
-          pvResourceThresholdViolated: 1,
+          pvResourceThresholdViolated: isZeroFill ? 0 : 1,
           thresholdPercentageDimValue: thresholdPercentage,
         }
         records.push(Yajl::Parser.parse(StringIO.new(resourceThresholdViolatedRecord)))
