@@ -39,8 +39,19 @@ class MdmMetricsGenerator
     Constants::MEMORY_WORKING_SET_BYTES => Constants::MDM_CONTAINER_MEMORY_WORKING_SET_UTILIZATION_METRIC,
   }
 
+  @@container_metric_name_metric_threshold_violated_hash = {
+    Constants::CPU_USAGE_MILLI_CORES => Constants::MDM_CONTAINER_CPU_THRESHOLD_VIOLATED_METRIC,
+    Constants::CPU_USAGE_NANO_CORES => Constants::MDM_CONTAINER_CPU_THRESHOLD_VIOLATED_METRIC,
+    Constants::MEMORY_RSS_BYTES => Constants::MDM_CONTAINER_MEMORY_RSS_THRESHOLD_VIOLATED_METRIC,
+    Constants::MEMORY_WORKING_SET_BYTES => Constants::MDM_CONTAINER_MEMORY_WORKING_SET_THRESHOLD_VIOLATED_METRIC,
+  }
+
   @@pod_metric_name_metric_percentage_name_hash = {
     Constants::PV_USED_BYTES => Constants::MDM_PV_UTILIZATION_METRIC,
+  }
+
+  @@pod_metric_name_metric_threshold_violated_hash = {
+    Constants::PV_USED_BYTES => Constants::MDM_PV_THRESHOLD_VIOLATED_METRIC,
   }
 
   # Setting this to true since we need to send zero filled metrics at startup. If metrics are absent alert creation fails
@@ -276,6 +287,19 @@ class MdmMetricsGenerator
           thresholdPercentageDimValue: thresholdPercentage,
         }
         records.push(Yajl::Parser.parse(StringIO.new(resourceUtilRecord)))
+
+        # Adding another metric for threshold violation
+        resourceThresholdViolatedRecord = MdmAlertTemplates::Container_resource_threshold_violation_template % {
+          timestamp: recordTimeStamp,
+          metricName: @@container_metric_name_metric_threshold_violated_hash[metricName],
+          containerNameDimValue: containerName,
+          podNameDimValue: podName,
+          controllerNameDimValue: controllerName,
+          namespaceDimValue: podNamespace,
+          containerResourceThresholdViolated: 1,
+          thresholdPercentageDimValue: thresholdPercentage,
+        }
+        records.push(Yajl::Parser.parse(StringIO.new(resourceThresholdViolatedRecord)))
       rescue => errorStr
         @log.info "Error in getContainerResourceUtilMetricRecords: #{errorStr}"
         ApplicationInsightsUtility.sendExceptionTelemetry(errorStr)
@@ -303,6 +327,19 @@ class MdmMetricsGenerator
           thresholdPercentageDimValue: thresholdPercentage,
         }
         records.push(Yajl::Parser.parse(StringIO.new(resourceUtilRecord)))
+
+        # Adding another metric for threshold violation
+        resourceThresholdViolatedRecord = MdmAlertTemplates::PV_resource_threshold_violation_template % {
+          timestamp: recordTimeStamp,
+          metricName: @@pod_metric_name_metric_threshold_violated_hash[metricName],
+          podNameDimValue: podName,
+          computerNameDimValue: computer,
+          namespaceDimValue: pvcNamespace,
+          volumeNameDimValue: volumeName,
+          pvResourceThresholdViolated: percentageMetricValue,
+          thresholdPercentageDimValue: thresholdPercentage,
+        }
+        records.push(Yajl::Parser.parse(StringIO.new(resourceThresholdViolatedRecord)))
       rescue => errorStr
         @log.info "Error in getPVResourceUtilMetricRecords: #{errorStr}"
         ApplicationInsightsUtility.sendExceptionTelemetry(errorStr)

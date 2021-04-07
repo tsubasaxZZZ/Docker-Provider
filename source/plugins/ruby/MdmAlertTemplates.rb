@@ -28,7 +28,7 @@ class MdmAlertTemplates
         }
     }'
 
-    Stable_job_metrics_template = '
+  Stable_job_metrics_template = '
     {
         "time": "%{timestamp}",
         "data": {
@@ -90,6 +90,39 @@ class MdmAlertTemplates
         }
     }'
 
+  Container_resource_threshold_violation_template = '
+    {
+        "time": "%{timestamp}",
+        "data": {
+            "baseData": {
+                "metric": "%{metricName}",
+                "namespace": "insights.container/containers",
+                "dimNames": [
+                    "containerName",
+                    "podName",
+                    "controllerName",
+                    "Kubernetes namespace",
+                    "thresholdPercentage"
+                ],
+                "series": [
+                {
+                    "dimValues": [
+                        "%{containerNameDimValue}",
+                        "%{podNameDimValue}",
+                        "%{controllerNameDimValue}",
+                        "%{namespaceDimValue}",
+                        "%{thresholdPercentageDimValue}"
+                    ],
+                    "min": %{containerResourceThresholdViolated},
+                    "max": %{containerResourceThresholdViolated},
+                    "sum": %{containerResourceThresholdViolated},
+                    "count": 1
+                }
+                ]
+            }
+        }
+    }'
+
   PV_resource_utilization_template = '
     {
         "time": "%{timestamp}",
@@ -123,6 +156,38 @@ class MdmAlertTemplates
         }
     }'
 
+  PV_resource_threshold_violation_template = '
+    {
+        "time": "%{timestamp}",
+        "data": {
+            "baseData": {
+                "metric": "%{metricName}",
+                "namespace": "insights.container/persistentvolumes",
+                "dimNames": [
+                    "podName",
+                    "node",
+                    "kubernetesNamespace",
+                    "volumeName",
+                    "thresholdPercentage"
+                ],
+                "series": [
+                {
+                    "dimValues": [
+                        "%{podNameDimValue}",
+                        "%{computerNameDimValue}",
+                        "%{namespaceDimValue}",
+                        "%{volumeNameDimValue}",
+                        "%{thresholdPercentageDimValue}"
+                    ],
+                    "min": %{pvResourceThresholdViolated},
+                    "max": %{pvResourceThresholdViolated},
+                    "sum": %{pvResourceThresholdViolated},
+                    "count": 1
+                }
+                ]
+            }
+        }
+    }'
 
   Node_resource_metrics_template = '
             {

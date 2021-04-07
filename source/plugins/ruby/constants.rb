@@ -53,6 +53,10 @@ class Constants
   MDM_CONTAINER_MEMORY_RSS_UTILIZATION_METRIC = "memoryRssExceededPercentage"
   MDM_CONTAINER_MEMORY_WORKING_SET_UTILIZATION_METRIC = "memoryWorkingSetExceededPercentage"
   MDM_PV_UTILIZATION_METRIC = "pvUsageExceededPercentage"
+  MDM_CONTAINER_CPU_THRESHOLD_VIOLATED_METRIC = "cpuThresholdViolated"
+  MDM_CONTAINER_MEMORY_RSS_THRESHOLD_VIOLATED_METRIC = "memoryRssThresholdViolated"
+  MDM_CONTAINER_MEMORY_WORKING_SET_THRESHOLD_VIOLATED_METRIC = "memoryWorkingSetThresholdViolated"
+  MDM_PV_THRESHOLD_VIOLATED_METRIC = "pvUsageThresholdViolated"
   MDM_NODE_CPU_USAGE_PERCENTAGE = "cpuUsagePercentage"
   MDM_NODE_MEMORY_RSS_PERCENTAGE = "memoryRssPercentage"
   MDM_NODE_MEMORY_WORKING_SET_PERCENTAGE = "memoryWorkingSetPercentage"
@@ -77,9 +81,9 @@ class Constants
   OMSAGENT_ZERO_FILL = "omsagent"
   KUBESYSTEM_NAMESPACE_ZERO_FILL = "kube-system"
   VOLUME_NAME_ZERO_FILL = "-"
-  PV_TYPES =["awsElasticBlockStore", "azureDisk", "azureFile", "cephfs", "cinder", "csi", "fc", "flexVolume",
-    "flocker", "gcePersistentDisk", "glusterfs", "hostPath", "iscsi", "local", "nfs",
-    "photonPersistentDisk", "portworxVolume", "quobyte", "rbd", "scaleIO", "storageos", "vsphereVolume"]
+  PV_TYPES = ["awsElasticBlockStore", "azureDisk", "azureFile", "cephfs", "cinder", "csi", "fc", "flexVolume",
+              "flocker", "gcePersistentDisk", "glusterfs", "hostPath", "iscsi", "local", "nfs",
+              "photonPersistentDisk", "portworxVolume", "quobyte", "rbd", "scaleIO", "storageos", "vsphereVolume"]
 
   #Telemetry constants
   CONTAINER_METRICS_HEART_BEAT_EVENT = "ContainerMetricsMdmHeartBeatEvent"
