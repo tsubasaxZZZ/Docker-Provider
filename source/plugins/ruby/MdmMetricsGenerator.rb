@@ -336,7 +336,7 @@ class MdmMetricsGenerator
           computerNameDimValue: computer,
           namespaceDimValue: pvcNamespace,
           volumeNameDimValue: volumeName,
-          pvResourceThresholdViolated: percentageMetricValue,
+          pvResourceThresholdViolated: 1,
           thresholdPercentageDimValue: thresholdPercentage,
         }
         records.push(Yajl::Parser.parse(StringIO.new(resourceThresholdViolatedRecord)))
