@@ -126,6 +126,11 @@ data:
     [alertable_metrics_configuration_settings.pv_utilization_thresholds]
         # Threshold for persistent volume usage bytes, metric will be sent only when persistent volume utilization exceeds or becomes equal to the following percentage
         pv_usage_threshold_percentage = 60.0
+
+    # Alertable metrics configuration settings for completed jobs count
+    [alertable_metrics_configuration_settings.job_completion_threshold]
+        # Threshold for completed job count , metric will be sent only for those jobs which were completed earlier than the following threshold 
+        job_completion_threshold_time_minutes = 360
   integrations: |-
     [integrations.azure_network_policy_manager]
         collect_basic_metrics = false

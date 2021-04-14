@@ -65,21 +65,22 @@ class Constants
   MEMORY_WORKING_SET_BYTES = "memoryWorkingSetBytes"
   MEMORY_RSS_BYTES = "memoryRssBytes"
   PV_USED_BYTES = "pvUsedBytes"
+  JOB_COMPLETION_TIME = "completedJobTimeMinutes"
   DEFAULT_MDM_CPU_UTILIZATION_THRESHOLD = 95.0
   DEFAULT_MDM_MEMORY_RSS_THRESHOLD = 95.0
   DEFAULT_MDM_MEMORY_WORKING_SET_THRESHOLD = 95.0
   DEFAULT_MDM_PV_UTILIZATION_THRESHOLD = 60.0
+  DEFAULT_MDM_JOB_COMPLETED_TIME_THRESHOLD_MINUTES = 360
   CONTROLLER_KIND_JOB = "job"
   CONTAINER_TERMINATION_REASON_COMPLETED = "completed"
   CONTAINER_STATE_TERMINATED = "terminated"
-  STALE_JOB_TIME_IN_MINUTES = 360
   TELEGRAF_DISK_METRICS = "container.azm.ms/disk"
   OMSAGENT_ZERO_FILL = "omsagent"
   KUBESYSTEM_NAMESPACE_ZERO_FILL = "kube-system"
   VOLUME_NAME_ZERO_FILL = "-"
-  PV_TYPES =["awsElasticBlockStore", "azureDisk", "azureFile", "cephfs", "cinder", "csi", "fc", "flexVolume",
-    "flocker", "gcePersistentDisk", "glusterfs", "hostPath", "iscsi", "local", "nfs",
-    "photonPersistentDisk", "portworxVolume", "quobyte", "rbd", "scaleIO", "storageos", "vsphereVolume"]
+  PV_TYPES = ["awsElasticBlockStore", "azureDisk", "azureFile", "cephfs", "cinder", "csi", "fc", "flexVolume",
+              "flocker", "gcePersistentDisk", "glusterfs", "hostPath", "iscsi", "local", "nfs",
+              "photonPersistentDisk", "portworxVolume", "quobyte", "rbd", "scaleIO", "storageos", "vsphereVolume"]
 
   #Telemetry constants
   CONTAINER_METRICS_HEART_BEAT_EVENT = "ContainerMetricsMdmHeartBeatEvent"

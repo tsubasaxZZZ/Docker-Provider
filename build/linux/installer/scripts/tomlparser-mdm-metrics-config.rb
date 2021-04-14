@@ -13,6 +13,7 @@ require_relative "microsoft/omsagent/plugin/constants"
 @percentageMemoryRssThreshold = Constants::DEFAULT_MDM_MEMORY_RSS_THRESHOLD
 @percentageMemoryWorkingSetThreshold = Constants::DEFAULT_MDM_MEMORY_WORKING_SET_THRESHOLD
 @percentagePVUsageThreshold = Constants::DEFAULT_MDM_PV_UTILIZATION_THRESHOLD
+@jobCompletionThresholdMinutes = Constants::DEFAULT_MDM_JOB_COMPLETED_TIME_THRESHOLD_MINUTES
 
 # Use parser to parse the configmap toml file to a ruby structure
 def parseConfigMap
@@ -101,6 +102,25 @@ def populateSettingValuesFromConfigMap(parsedConfig)
       ConfigParseErrorLogger.logError("Exception while reading config map settings for MDM metric configuration settings for PV utilization - #{errorStr}, using defaults, please check config map for errors")
       @percentagePVUsageThreshold = Constants::DEFAULT_MDM_PV_UTILIZATION_THRESHOLD
     end
+
+    # Get mdm metrics config settings for job completion
+    begin
+      jobCompletion = parsedConfig[:alertable_metrics_configuration_settings][:job_completion_threshold]
+      if !jobCompletion.nil?
+        jobCompletionThreshold = jobCompletion[:job_completion_threshold_time_minutes]
+        jobCompletionThresholdInt = cpuThreshold.to_i
+        if jobCompletionThresholdInt.kind_of? Integer
+          @jobCompletionThresholdMinutes = jobCompletionThresholdInt
+        else
+          puts "config::Non interger value or value not convertible to integer specified for job completion threshold, using default "
+          @jobCompletionThresholdMinutes = Constants::DEFAULT_MDM_JOB_COMPLETED_TIME_THRESHOLD_MINUTES
+        end
+        puts "config::Using config map settings for MDM metric configuration settings for job completion"
+      end
+    rescue => errorStr
+      ConfigParseErrorLogger.logError("Exception while reading config map settings for MDM metric configuration settings for job completion - #{errorStr}, using defaults, please check config map for errors")
+      @jobCompletionThresholdMinutes = Constants::DEFAULT_MDM_JOB_COMPLETED_TIME_THRESHOLD_MINUTES
+    end
   end
 end
 
@@ -125,6 +145,7 @@ if !file.nil?
   file.write("export AZMON_ALERT_CONTAINER_MEMORY_RSS_THRESHOLD=#{@percentageMemoryRssThreshold}\n")
   file.write("export AZMON_ALERT_CONTAINER_MEMORY_WORKING_SET_THRESHOLD=\"#{@percentageMemoryWorkingSetThreshold}\"\n")
   file.write("export AZMON_ALERT_PV_USAGE_THRESHOLD=#{@percentagePVUsageThreshold}\n")
+  file.write("export AZMON_ALERT_JOB_COMPLETION_TIME_THRESHOLD=#{@jobCompletionThresholdMinutes}\n")
   # Close file after writing all MDM setting environment variables
   file.close
   puts "****************End MDM Metrics Config Processing********************"

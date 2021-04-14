@@ -28,7 +28,7 @@ class MdmAlertTemplates
         }
     }'
 
-    Stable_job_metrics_template = '
+  Stable_job_metrics_template = '
     {
         "time": "%{timestamp}",
         "data": {
@@ -45,7 +45,7 @@ class MdmAlertTemplates
                     "dimValues": [
                         "%{controllerNameDimValue}",
                         "%{namespaceDimValue}",
-                        "6"
+                        "%{jobCompletionThreshold}"
                     ],
                     "min": %{containerCountMetricValue},
                     "max": %{containerCountMetricValue},
@@ -122,7 +122,6 @@ class MdmAlertTemplates
             }
         }
     }'
-
 
   Node_resource_metrics_template = '
             {

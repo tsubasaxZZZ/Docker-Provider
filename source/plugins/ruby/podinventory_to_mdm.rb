@@ -88,6 +88,7 @@ class Inventory2MdmConvertor
     @pod_count_by_phase = {}
     @pod_uids = {}
     @process_incoming_stream = CustomMetricsUtils.check_custom_metrics_availability
+    @metric_threshold_hash = MdmMetricsGenerator.getContainerResourceUtilizationThresholds
     @log.debug "After check_custom_metrics_availability process_incoming_stream #{@process_incoming_stream}"
     @log.debug { "Starting podinventory_to_mdm plugin" }
   end
@@ -259,7 +260,7 @@ class Inventory2MdmConvertor
             if !containerFinishedTime.nil? && !containerFinishedTime.empty?
               finishedTimeParsed = Time.parse(containerFinishedTime)
               # Check to see if job was completed 6 hours ago/STALE_JOB_TIME_IN_MINUTES
-              if ((Time.now - finishedTimeParsed) / 60) > Constants::STALE_JOB_TIME_IN_MINUTES
+              if ((Time.now - finishedTimeParsed) / 60) > @metric_threshold_hash[Constants::JOB_COMPLETION_TIME]
                 MdmMetricsGenerator.generateStaleJobCountMetrics(podControllerNameDimValue,
                                                                  podNamespaceDimValue)
               end
