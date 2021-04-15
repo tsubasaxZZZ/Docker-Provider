@@ -502,6 +502,10 @@ class KubernetesApiClient
               end
             end
           end
+          # reset time outside pod iterator
+          if (timeDifferenceInMinutes >= Constants::TELEMETRY_FLUSH_INTERVAL_IN_MINUTES)
+            @@telemetryTimeTracker = DateTime.now.to_time.to_i
+          end
         end
       rescue => error
         @Log.warn("getcontainerResourceRequestsAndLimits failed: #{error} for metric #{metricCategory} #{metricNameToCollect}")
