@@ -97,15 +97,17 @@ class MdmMetricsGenerator
             podNamespaceDimValue = key_elements[1]
 
             # Special handling for jobs since we need to send the threshold as a dimension as it is configurable
-            metric_threshold_hash = getContainerResourceUtilizationThresholds
             if metricName == Constants::MDM_STALE_COMPLETED_JOB_COUNT
+              metric_threshold_hash = getContainerResourceUtilizationThresholds
+              #Converting this to hours since we already have olderThanHours dimension.
+              jobCompletionThresholdHours = metric_threshold_hash[Constants::JOB_COMPLETION_TIME] / 60
               record = metricsTemplate % {
                 timestamp: batch_time,
                 metricName: metricName,
                 controllerNameDimValue: podControllerNameDimValue,
                 namespaceDimValue: podNamespaceDimValue,
                 containerCountMetricValue: value,
-                jobCompletionThreshold: metric_threshold_hash[Constants::JOB_COMPLETION_TIME],
+                jobCompletionThreshold: jobCompletionThresholdHours,
               }
             else
               record = metricsTemplate % {
