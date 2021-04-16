@@ -108,7 +108,7 @@ def populateSettingValuesFromConfigMap(parsedConfig)
       jobCompletion = parsedConfig[:alertable_metrics_configuration_settings][:job_completion_threshold]
       if !jobCompletion.nil?
         jobCompletionThreshold = jobCompletion[:job_completion_threshold_time_minutes]
-        jobCompletionThresholdInt = cpuThreshold.to_i
+        jobCompletionThresholdInt = jobCompletionThreshold.to_i
         if jobCompletionThresholdInt.kind_of? Integer
           @jobCompletionThresholdMinutes = jobCompletionThresholdInt
         else
