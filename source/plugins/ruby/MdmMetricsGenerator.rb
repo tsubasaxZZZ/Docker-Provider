@@ -100,7 +100,7 @@ class MdmMetricsGenerator
             if metricName == Constants::MDM_STALE_COMPLETED_JOB_COUNT
               metric_threshold_hash = getContainerResourceUtilizationThresholds
               #Converting this to hours since we already have olderThanHours dimension.
-              jobCompletionThresholdHours = metric_threshold_hash[Constants::JOB_COMPLETION_TIME] / 60
+              jobCompletionThresholdHours = metric_threshold_hash[Constants::JOB_COMPLETION_TIME] / 60.0
               record = metricsTemplate % {
                 timestamp: batch_time,
                 metricName: metricName,
