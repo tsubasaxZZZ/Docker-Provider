@@ -502,8 +502,8 @@ class KubernetesApiClient
               end
             end
           end
-          # reset time outside pod iterator
-          if (timeDifferenceInMinutes >= Constants::TELEMETRY_FLUSH_INTERVAL_IN_MINUTES)
+          # reset time outside pod iterator and after the last metric call from KubePodInventory
+          if (timeDifferenceInMinutes >= Constants::TELEMETRY_FLUSH_INTERVAL_IN_MINUTES) && (metricNametoReturn == "memoryLimitBytes")
             @@telemetryTimeTracker = DateTime.now.to_time.to_i
           end
         end

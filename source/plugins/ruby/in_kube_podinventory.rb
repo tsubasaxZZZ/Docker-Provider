@@ -250,6 +250,7 @@ module Fluent
           end
 
           #container perf records
+          # The order of calls below has impact on telemetry in methos getContainerResourceRequestsAndLimits. Make sure to update the check if this order of calls id changed.
           containerMetricDataItems = []
           containerMetricDataItems.concat(KubernetesApiClient.getContainerResourceRequestsAndLimits(item, "requests", "cpu", "cpuRequestNanoCores", batchTime))
           containerMetricDataItems.concat(KubernetesApiClient.getContainerResourceRequestsAndLimits(item, "requests", "memory", "memoryRequestBytes", batchTime))
