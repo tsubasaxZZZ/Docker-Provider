@@ -39,8 +39,19 @@ class MdmMetricsGenerator
     Constants::MEMORY_WORKING_SET_BYTES => Constants::MDM_CONTAINER_MEMORY_WORKING_SET_UTILIZATION_METRIC,
   }
 
+  @@container_metric_name_metric_threshold_violated_hash = {
+    Constants::CPU_USAGE_MILLI_CORES => Constants::MDM_CONTAINER_CPU_THRESHOLD_VIOLATED_METRIC,
+    Constants::CPU_USAGE_NANO_CORES => Constants::MDM_CONTAINER_CPU_THRESHOLD_VIOLATED_METRIC,
+    Constants::MEMORY_RSS_BYTES => Constants::MDM_CONTAINER_MEMORY_RSS_THRESHOLD_VIOLATED_METRIC,
+    Constants::MEMORY_WORKING_SET_BYTES => Constants::MDM_CONTAINER_MEMORY_WORKING_SET_THRESHOLD_VIOLATED_METRIC,
+  }
+
   @@pod_metric_name_metric_percentage_name_hash = {
     Constants::PV_USED_BYTES => Constants::MDM_PV_UTILIZATION_METRIC,
+  }
+
+  @@pod_metric_name_metric_threshold_violated_hash = {
+    Constants::PV_USED_BYTES => Constants::MDM_PV_THRESHOLD_VIOLATED_METRIC,
   }
 
   # Setting this to true since we need to send zero filled metrics at startup. If metrics are absent alert creation fails
@@ -175,43 +186,63 @@ class MdmMetricsGenerator
 
         metric_threshold_hash = getContainerResourceUtilizationThresholds
         container_zero_fill_dims = [Constants::OMSAGENT_ZERO_FILL, Constants::OMSAGENT_ZERO_FILL, Constants::OMSAGENT_ZERO_FILL, Constants::KUBESYSTEM_NAMESPACE_ZERO_FILL].join("~~")
-        containerCpuRecord = getContainerResourceUtilMetricRecords(batch_time,
-                                                                   Constants::CPU_USAGE_NANO_CORES,
-                                                                   0,
-                                                                   container_zero_fill_dims,
-                                                                   metric_threshold_hash[Constants::CPU_USAGE_NANO_CORES])
-        if !containerCpuRecord.nil? && !containerCpuRecord.empty? && !containerCpuRecord[0].nil? && !containerCpuRecord[0].empty?
-          records.push(containerCpuRecord[0])
+        containerCpuRecords = getContainerResourceUtilMetricRecords(batch_time,
+                                                                    Constants::CPU_USAGE_NANO_CORES,
+                                                                    0,
+                                                                    container_zero_fill_dims,
+                                                                    metric_threshold_hash[Constants::CPU_USAGE_NANO_CORES],
+                                                                    true)
+        if !containerCpuRecords.nil? && !containerCpuRecords.empty?
+          containerCpuRecords.each { |cpuRecord|
+            if !cpuRecord.nil? && !cpuRecord.empty?
+              records.push(cpuRecord)
+            end
+          }
         end
-        containerMemoryRssRecord = getContainerResourceUtilMetricRecords(batch_time,
-                                                                         Constants::MEMORY_RSS_BYTES,
-                                                                         0,
-                                                                         container_zero_fill_dims,
-                                                                         metric_threshold_hash[Constants::MEMORY_RSS_BYTES])
-        if !containerMemoryRssRecord.nil? && !containerMemoryRssRecord.empty? && !containerMemoryRssRecord[0].nil? && !containerMemoryRssRecord[0].empty?
-          records.push(containerMemoryRssRecord[0])
+        containerMemoryRssRecords = getContainerResourceUtilMetricRecords(batch_time,
+                                                                          Constants::MEMORY_RSS_BYTES,
+                                                                          0,
+                                                                          container_zero_fill_dims,
+                                                                          metric_threshold_hash[Constants::MEMORY_RSS_BYTES],
+                                                                          true)
+        if !containerMemoryRssRecords.nil? && !containerMemoryRssRecords.empty?
+          containerMemoryRssRecords.each { |memoryRssRecord|
+            if !memoryRssRecord.nil? && !memoryRssRecord.empty?
+              records.push(memoryRssRecord)
+            end
+          }
         end
-        containerMemoryWorkingSetRecord = getContainerResourceUtilMetricRecords(batch_time,
-                                                                                Constants::MEMORY_WORKING_SET_BYTES,
-                                                                                0,
-                                                                                container_zero_fill_dims,
-                                                                                metric_threshold_hash[Constants::MEMORY_WORKING_SET_BYTES])
-        if !containerMemoryWorkingSetRecord.nil? && !containerMemoryWorkingSetRecord.empty? && !containerMemoryWorkingSetRecord[0].nil? && !containerMemoryWorkingSetRecord[0].empty?
-          records.push(containerMemoryWorkingSetRecord[0])
+        containerMemoryWorkingSetRecords = getContainerResourceUtilMetricRecords(batch_time,
+                                                                                 Constants::MEMORY_WORKING_SET_BYTES,
+                                                                                 0,
+                                                                                 container_zero_fill_dims,
+                                                                                 metric_threshold_hash[Constants::MEMORY_WORKING_SET_BYTES],
+                                                                                 true)
+        if !containerMemoryWorkingSetRecords.nil? && !containerMemoryWorkingSetRecords.empty?
+          containerMemoryWorkingSetRecords.each { |workingSetRecord|
+            if !workingSetRecord.nil? && !workingSetRecord.empty?
+              records.push(workingSetRecord)
+            end
+          }
         end
 
         pvZeroFillDims = {}
         pvZeroFillDims[Constants::INSIGHTSMETRICS_TAGS_PVC_NAMESPACE] = Constants::KUBESYSTEM_NAMESPACE_ZERO_FILL
         pvZeroFillDims[Constants::INSIGHTSMETRICS_TAGS_POD_NAME] = Constants::OMSAGENT_ZERO_FILL
         pvZeroFillDims[Constants::INSIGHTSMETRICS_TAGS_VOLUME_NAME] = Constants::VOLUME_NAME_ZERO_FILL
-        pvResourceUtilMetricRecord = getPVResourceUtilMetricRecords(batch_time,
-                                                                    Constants::PV_USED_BYTES,
-                                                                    @@hostName,
-                                                                    0,
-                                                                    pvZeroFillDims,
-                                                                    metric_threshold_hash[Constants::PV_USED_BYTES])
-        if !pvResourceUtilMetricRecord.nil? && !pvResourceUtilMetricRecord.empty? && !pvResourceUtilMetricRecord[0].nil? && !pvResourceUtilMetricRecord[0].empty?
-          records.push(pvResourceUtilMetricRecord[0])
+        pvResourceUtilMetricRecords = getPVResourceUtilMetricRecords(batch_time,
+                                                                     Constants::PV_USED_BYTES,
+                                                                     @@hostName,
+                                                                     0,
+                                                                     pvZeroFillDims,
+                                                                     metric_threshold_hash[Constants::PV_USED_BYTES],
+                                                                     true)
+        if !pvResourceUtilMetricRecords.nil? && !pvResourceUtilMetricRecords.empty?
+          pvResourceUtilMetricRecords.each { |pvRecord|
+            if !pvRecord.nil? && !pvRecord.empty?
+              records.push(pvRecord)
+            end
+          }
         end
       rescue => errorStr
         @log.info "Error in zeroFillMetricRecords: #{errorStr}"
@@ -264,7 +295,7 @@ class MdmMetricsGenerator
       return records
     end
 
-    def getContainerResourceUtilMetricRecords(recordTimeStamp, metricName, percentageMetricValue, dims, thresholdPercentage)
+    def getContainerResourceUtilMetricRecords(recordTimeStamp, metricName, percentageMetricValue, dims, thresholdPercentage, isZeroFill = false)
       records = []
       begin
         if dims.nil?
@@ -293,6 +324,19 @@ class MdmMetricsGenerator
           thresholdPercentageDimValue: thresholdPercentage,
         }
         records.push(Yajl::Parser.parse(StringIO.new(resourceUtilRecord)))
+
+        # Adding another metric for threshold violation
+        resourceThresholdViolatedRecord = MdmAlertTemplates::Container_resource_threshold_violation_template % {
+          timestamp: recordTimeStamp,
+          metricName: @@container_metric_name_metric_threshold_violated_hash[metricName],
+          containerNameDimValue: containerName,
+          podNameDimValue: podName,
+          controllerNameDimValue: controllerName,
+          namespaceDimValue: podNamespace,
+          containerResourceThresholdViolated: isZeroFill ? 0 : 1,
+          thresholdPercentageDimValue: thresholdPercentage,
+        }
+        records.push(Yajl::Parser.parse(StringIO.new(resourceThresholdViolatedRecord)))
       rescue => errorStr
         @log.info "Error in getContainerResourceUtilMetricRecords: #{errorStr}"
         ApplicationInsightsUtility.sendExceptionTelemetry(errorStr)
@@ -300,7 +344,7 @@ class MdmMetricsGenerator
       return records
     end
 
-    def getPVResourceUtilMetricRecords(recordTimeStamp, metricName, computer, percentageMetricValue, dims, thresholdPercentage)
+    def getPVResourceUtilMetricRecords(recordTimeStamp, metricName, computer, percentageMetricValue, dims, thresholdPercentage, isZeroFill = false)
       records = []
       begin
         containerName = dims[Constants::INSIGHTSMETRICS_TAGS_CONTAINER_NAME]
@@ -320,6 +364,19 @@ class MdmMetricsGenerator
           thresholdPercentageDimValue: thresholdPercentage,
         }
         records.push(Yajl::Parser.parse(StringIO.new(resourceUtilRecord)))
+
+        # Adding another metric for threshold violation
+        resourceThresholdViolatedRecord = MdmAlertTemplates::PV_resource_threshold_violation_template % {
+          timestamp: recordTimeStamp,
+          metricName: @@pod_metric_name_metric_threshold_violated_hash[metricName],
+          podNameDimValue: podName,
+          computerNameDimValue: computer,
+          namespaceDimValue: pvcNamespace,
+          volumeNameDimValue: volumeName,
+          pvResourceThresholdViolated: isZeroFill ? 0 : 1,
+          thresholdPercentageDimValue: thresholdPercentage,
+        }
+        records.push(Yajl::Parser.parse(StringIO.new(resourceThresholdViolatedRecord)))
       rescue => errorStr
         @log.info "Error in getPVResourceUtilMetricRecords: #{errorStr}"
         ApplicationInsightsUtility.sendExceptionTelemetry(errorStr)
