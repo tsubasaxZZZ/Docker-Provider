@@ -180,4 +180,14 @@ $exclude = @('*.cs','*.csproj')
 Copy-Item  -Path $installerdir  -Destination $publishdir -Recurse -Force -Exclude $exclude
 Write-Host("successfully copied installer files conf and scripts from :" + $installerdir + "  to  :" + $publishdir + " ") -ForegroundColor Green
 
+$rubyplugindir = Join-Path -Path $rootdir -ChildPath "source\plugins\ruby"
+Write-Host("copying ruby source files from :" + $rubyplugindir + "  to  :" + $publishdir + " ...")
+Copy-Item -Path $rubyplugindir -Destination $publishdir -Recurse -Force
+Write-Host("successfully copied ruby source files from :" + $rubyplugindir + "  to  :" + $publishdir + " ") -ForegroundColor Green
+
+$utilsplugindir = Join-Path -Path $rootdir -ChildPath "source\plugins\utils"
+Write-Host("copying ruby util files from :" + $utilsplugindir + "  to  :" + $publishdir + " ...")
+Copy-Item -Path $utilsplugindir -Destination $publishdir -Recurse -Force
+Write-Host("successfully copied ruby util files from :" + $utilsplugindir + "  to  :" + $publishdir + " ") -ForegroundColor Green
+
 Set-Location $currentdir

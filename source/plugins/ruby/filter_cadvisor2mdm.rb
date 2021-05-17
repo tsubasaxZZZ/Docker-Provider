@@ -2,7 +2,7 @@
 
 # frozen_string_literal: true
 
-require 'fluent/plugin/filter'
+require "fluent/plugin/filter"
 
 module Fluent::Plugin
   require "logger"
@@ -27,6 +27,12 @@ module Fluent::Plugin
 
     @@metric_threshold_hash = {}
     @@controller_type = ""
+
+    @@isWindows = false
+    @@os_type = ENV["OS_TYPE"]
+    if !@@os_type.nil? && !@@os_type.empty? && @@os_type.strip.casecmp("windows") == 0
+      @@isWindows = true
+    end
 
     def initialize
       super
@@ -130,15 +136,17 @@ module Fluent::Plugin
 
       # Also send for PV usage metrics
       begin
-        pvTimeDifference = (DateTime.now.to_time.to_i - @@pvUsageTelemetryTimeTracker).abs
-        pvTimeDifferenceInMinutes = pvTimeDifference / 60
-        if (pvTimeDifferenceInMinutes >= Constants::TELEMETRY_FLUSH_INTERVAL_IN_MINUTES)
-          pvProperties = {}
-          pvProperties["PVUsageThresholdPercentage"] = @@metric_threshold_hash[Constants::PV_USED_BYTES]
-          pvProperties["PVUsageThresholdExceededInLastFlushInterval"] = @pvExceededUsageThreshold
-          ApplicationInsightsUtility.sendCustomEvent(Constants::PV_USAGE_HEART_BEAT_EVENT, pvProperties)
-          @pvExceededUsageThreshold = false
-          @@pvUsageTelemetryTimeTracker = DateTime.now.to_time.to_i
+        if !@@isWindows.nil? && @@isWindows == false
+          pvTimeDifference = (DateTime.now.to_time.to_i - @@pvUsageTelemetryTimeTracker).abs
+          pvTimeDifferenceInMinutes = pvTimeDifference / 60
+          if (pvTimeDifferenceInMinutes >= Constants::TELEMETRY_FLUSH_INTERVAL_IN_MINUTES)
+            pvProperties = {}
+            pvProperties["PVUsageThresholdPercentage"] = @@metric_threshold_hash[Constants::PV_USED_BYTES]
+            pvProperties["PVUsageThresholdExceededInLastFlushInterval"] = @pvExceededUsageThreshold
+            ApplicationInsightsUtility.sendCustomEvent(Constants::PV_USAGE_HEART_BEAT_EVENT, pvProperties)
+            @pvExceededUsageThreshold = false
+            @@pvUsageTelemetryTimeTracker = DateTime.now.to_time.to_i
+          end
         end
       rescue => errorStr
         @log.info "Error in flushMetricTelemetry: #{errorStr} for PV usage telemetry"
@@ -150,16 +158,16 @@ module Fluent::Plugin
       begin
         if @process_incoming_stream
 
-          # Check if insights metrics for PV metrics      
+          # Check if insights metrics for PV metrics
           if record["Name"] == Constants::PV_USED_BYTES
             return filterPVInsightsMetrics(record)
           end
 
           object_name = record["ObjectName"]
           counter_name = JSON.parse(record["json_Collections"])[0]["CounterName"]
-         
+
           percentage_metric_value = 0.0
-          metric_value = JSON.parse(record["json_Collections"])[0]["Value"]          
+          metric_value = JSON.parse(record["json_Collections"])[0]["Value"]
 
           if object_name == Constants::OBJECT_NAME_K8S_NODE && @metrics_to_collect_hash.key?(counter_name.downcase)
             # Compute and send % CPU and Memory
@@ -188,7 +196,7 @@ module Fluent::Plugin
               if target_node_mem_capacity != 0.0
                 percentage_metric_value = metric_value * 100 / target_node_mem_capacity
               end
-            end            
+            end
             @log.info "percentage_metric_value for metric: #{metric_name} for instance: #{record["Host"]} percentage: #{percentage_metric_value}"
 
             # do some sanity checking. Do we want this?
@@ -258,7 +266,7 @@ module Fluent::Plugin
       end
     end
 
-   def filterPVInsightsMetrics(record)
+    def filterPVInsightsMetrics(record)
       begin
         mdmMetrics = []
         if record["Name"] == Constants::PV_USED_BYTES && @metrics_to_collect_hash.key?(record["Name"].downcase)
@@ -315,8 +323,8 @@ module Fluent::Plugin
         end
         if !nodeInventory.nil?
           cpu_capacity_json = KubernetesApiClient.parseNodeLimits(nodeInventory, "capacity", "cpu", "cpuCapacityNanoCores")
-          if !cpu_capacity_json.nil? 
-             metricVal = JSON.parse(cpu_capacity_json[0]["json_Collections"])[0]["Value"]
+          if !cpu_capacity_json.nil?
+            metricVal = JSON.parse(cpu_capacity_json[0]["json_Collections"])[0]["Value"]
             if !metricVal.to_s.nil?
               @cpu_capacity = metricVal
               @log.info "CPU Limit #{@cpu_capacity}"
@@ -325,8 +333,8 @@ module Fluent::Plugin
             @log.info "Error getting cpu_capacity"
           end
           memory_capacity_json = KubernetesApiClient.parseNodeLimits(nodeInventory, "capacity", "memory", "memoryCapacityBytes")
-          if !memory_capacity_json.nil? 
-            metricVal = JSON.parse(cpu_capacity_json[0]["json_Collections"])[0]["Value"]          
+          if !memory_capacity_json.nil?
+            metricVal = JSON.parse(cpu_capacity_json[0]["json_Collections"])[0]["Value"]
             if !metricVal.to_s.nil?
               @memory_capacity = metricVal
               @log.info "Memory Limit #{@memory_capacity}"
@@ -346,7 +354,6 @@ module Fluent::Plugin
           # cpu_capacity and memory_capacity keep initialized value of 0.0
           @log.error "Error getting capacity_from_kubelet: cpu_capacity and memory_capacity"
         end
-
       end
     end
 

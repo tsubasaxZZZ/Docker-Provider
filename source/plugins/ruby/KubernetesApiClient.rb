@@ -25,7 +25,12 @@ class KubernetesApiClient
   #@@IsValidRunningNode = nil
   #@@IsLinuxCluster = nil
   @@KubeSystemNamespace = "kube-system"
-  @LogPath = "/var/opt/microsoft/docker-cimprov/log/kubernetes_client_log.txt"
+  @os_type = ENV["OS_TYPE"]
+  if !@os_type.nil? && !@os_type.empty? && @os_type.strip.casecmp("windows") == 0
+    @LogPath = "/etc/omsagentwindows/kubernetes_client_log.txt"
+  else
+    @LogPath = "/var/opt/microsoft/docker-cimprov/log/kubernetes_client_log.txt"
+  end
   @Log = Logger.new(@LogPath, 2, 10 * 1048576) #keep last 2 files, max log file size = 10M
   @@TokenFileName = "/var/run/secrets/kubernetes.io/serviceaccount/token"
   @@TokenStr = nil
@@ -453,12 +458,12 @@ class KubernetesApiClient
               metricCollection = {}
               metricCollection["CounterName"] = metricNametoReturn
               metricCollection["Value"] = metricValue
-              
+
               metricProps["json_Collections"] = []
-              metricCollections = []               
-              metricCollections.push(metricCollection)        
+              metricCollections = []
+              metricCollections.push(metricCollection)
               metricProps["json_Collections"] = metricCollections.to_json
-              metricItems.push(metricProps)             
+              metricItems.push(metricProps)
               #No container level limit for the given metric, so default to node level limit
             else
               nodeMetricsHashKey = clusterId + "/" + nodeName + "_" + "allocatable" + "_" + metricNameToCollect
@@ -480,10 +485,10 @@ class KubernetesApiClient
                 metricCollection["CounterName"] = metricNametoReturn
                 metricCollection["Value"] = metricValue
                 metricProps["json_Collections"] = []
-                metricCollections = []                  
-                metricCollections.push(metricCollection)        
+                metricCollections = []
+                metricCollections.push(metricCollection)
                 metricProps["json_Collections"] = metricCollections.to_json
-                metricItems.push(metricProps)              
+                metricItems.push(metricProps)
               end
             end
           end
@@ -614,11 +619,11 @@ class KubernetesApiClient
           metricCollection["CounterName"] = metricNametoReturn
           metricCollection["Value"] = metricValue
           metricCollections = []
-          metricCollections.push(metricCollection) 
-         
+          metricCollections.push(metricCollection)
+
           metricItem["json_Collections"] = []
           metricItem["json_Collections"] = metricCollections.to_json
-         
+
           #push node level metrics to a inmem hash so that we can use it looking up at container level.
           #Currently if container level cpu & memory limits are not defined we default to node level limits
           @@NodeMetrics[clusterId + "/" + node["metadata"]["name"] + "_" + metricCategory + "_" + metricNameToCollect] = metricValue
