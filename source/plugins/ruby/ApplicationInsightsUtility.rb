@@ -30,7 +30,6 @@ class ApplicationInsightsUtility
   end
   @@CustomProperties = {}
   @@Tc = nil
-  @@hostName = (OMS::Common.get_hostname)
   @@proxy = (ProxyUtils.getProxyConfiguration)
 
   def initialize
