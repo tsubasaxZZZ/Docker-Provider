@@ -404,11 +404,40 @@ function Test-CertificatePath {
     }
 }
 
+function Bootstrap-CACertificates {
+    try {
+        # This is required when the root CA certs are different for some clouds.
+        $certMountPath = "C:\ca"
+        Get-ChildItem $certMountPath |
+        Foreach-Object {
+            $absolutePath=$_.FullName
+            Write-Host "cert path: $($absolutePath)"
+            Import-Certificate -FilePath $absolutePath -CertStoreLocation 'Cert:\LocalMachine\Root' -Verbose
+        }
+    }
+    catch {
+        $e = $_.Exception
+        Write-Host $e
+        Write-Host "exception occured in Bootstrap-CACertificates..."
+    }
+}
+
 Start-Transcript -Path main.txt
 
 Remove-WindowsServiceIfItExists "fluentdwinaks"
 Set-EnvironmentVariables
 Start-FileSystemWatcher
+
+#Bootstrapping CA certs for non public clouds and AKS clusters
+$aksResourceId = [System.Environment]::GetEnvironmentVariable("AKS_RESOURCE_ID")
+$requiresCertBootstrap = [System.Environment]::GetEnvironmentVariable("REQUIRES_CERT_BOOTSTRAP")
+if (![string]::IsNullOrEmpty($requiresCertBootstrap) -and `
+    $requiresCertBootstrap.ToLower() -eq 'true' -and `
+    ![string]::IsNullOrEmpty($aksResourceId) -and `
+    $aksResourceId.ToLower().Contains("/microsoft.containerservice/managedclusters/"))
+{
+    Bootstrap-CACertificates
+}
 
 Generate-Certificates
 Test-CertificatePath

@@ -790,6 +790,9 @@ spec:
                  fieldPath: status.hostIP
           - name: SIDECAR_SCRAPING_ENABLED
             value: "true"
+          # Add this only for clouds that require cert bootstrapping
+          - name: REQUIRES_CERT_BOOTSTRAP
+            value: "true"
          volumeMounts:
           - mountPath: C:\ProgramData\docker\containers
             name: docker-windows-containers
