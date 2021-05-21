@@ -119,6 +119,25 @@ function Set-EnvironmentVariables {
         $env:AZMON_AGENT_CFG_SCHEMA_VERSION
     }
 
+    # Need to do this before the SA fetch for AI key for airgapped clouds so that it is not overwritten with defaults.
+    $appInsightsAuth = [System.Environment]::GetEnvironmentVariable("APPLICATIONINSIGHTS_AUTH", "process")
+    if (![string]::IsNullOrEmpty($appInsightsAuth)) {
+        [System.Environment]::SetEnvironmentVariable("APPLICATIONINSIGHTS_AUTH", $appInsightsAuth, "machine")
+        Write-Host "Successfully set environment variable APPLICATIONINSIGHTS_AUTH - $($appInsightsAuth) for target 'machine'..."
+    }
+    else {
+        Write-Host "Failed to set environment variable APPLICATIONINSIGHTS_AUTH for target 'machine' since it is either null or empty"
+    }
+
+    $appInsightsEndpoint = [System.Environment]::GetEnvironmentVariable("APPLICATIONINSIGHTS_ENDPOINT", "process")
+    if (![string]::IsNullOrEmpty($appInsightsEndpoint)) {
+        [System.Environment]::SetEnvironmentVariable("APPLICATIONINSIGHTS_ENDPOINT", $appInsightsEndpoint, "machine")
+        Write-Host "Successfully set environment variable APPLICATIONINSIGHTS_ENDPOINT - $($appInsightsEndpoint) for target 'machine'..."
+    }
+    else {
+        Write-Host "Failed to set environment variable APPLICATIONINSIGHTS_ENDPOINT for target 'machine' since it is either null or empty"
+    }
+
     # Check if the instrumentation key needs to be fetched from a storage account (as in airgapped clouds)
     $aiKeyURl = [System.Environment]::GetEnvironmentVariable('APPLICATIONINSIGHTS_AUTH_URL')
     if ($aiKeyURl) {
@@ -202,15 +221,6 @@ function Set-EnvironmentVariables {
     if (![string]::IsNullOrEmpty($userMsi)) {
         [System.Environment]::SetEnvironmentVariable("USER_ASSIGNED_IDENTITY_CLIENT_ID", $userMsi, "machine")
         Write-Host "Successfully set environment variable USER_ASSIGNED_IDENTITY_CLIENT_ID - $($userMsi) for target 'machine'..."
-    }
-
-    $appInsightsAuth = [System.Environment]::GetEnvironmentVariable("APPLICATIONINSIGHTS_AUTH", "process")
-    if (![string]::IsNullOrEmpty($appInsightsAuth)) {
-        [System.Environment]::SetEnvironmentVariable("APPLICATIONINSIGHTS_AUTH", $appInsightsAuth, "machine")
-        Write-Host "Successfully set environment variable APPLICATIONINSIGHTS_AUTH - $($appInsightsAuth) for target 'machine'..."
-    }
-    else {
-        Write-Host "Failed to set environment variable APPLICATIONINSIGHTS_AUTH for target 'machine' since it is either null or empty"
     }
 
     $hostName = [System.Environment]::GetEnvironmentVariable("HOSTNAME", "process")
