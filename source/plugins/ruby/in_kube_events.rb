@@ -131,7 +131,8 @@ module Fluent::Plugin
     end # end enumerate
 
     def parse_and_emit_records(events, eventQueryState, newEventQueryState, batchTime = Time.utc.iso8601)
-      currentTime = Time.now      
+      currentTime = Time.now   
+      emitTime = Fluent::Engine.now  
       @@istestvar = ENV["ISTEST"]
       begin
         eventStream = Fluent::MultiEventStream.new
@@ -166,7 +167,7 @@ module Fluent::Plugin
           record["Computer"] = nodeName
           record["ClusterName"] = KubernetesApiClient.getClusterName
           record["ClusterId"] = KubernetesApiClient.getClusterId        
-          eventStream.add(Fluent::Engine.now, record) if record
+          eventStream.add(emitTime, record) if record
           @eventsCount += 1
         end
         router.emit_stream(@tag, eventStream) if eventStream

@@ -161,7 +161,8 @@ module Fluent::Plugin
 
     def parse_and_emit_records(nodeInventory, batchTime = Time.utc.iso8601)
       begin
-        currentTime = Time.now        
+        currentTime = Time.now    
+        emitTime = Fluent::Engine.now    
         telemetrySent = false
         eventStream = Fluent::MultiEventStream.new
         containerNodeInventoryEventStream = Fluent::MultiEventStream.new
@@ -172,7 +173,7 @@ module Fluent::Plugin
         nodeInventory["items"].each do |item|
           # node inventory
           nodeInventoryRecord = getNodeInventoryRecord(item, batchTime)
-          eventStream.add(Fluent::Engine.now, nodeInventoryRecord) if nodeInventoryRecord         
+          eventStream.add(emitTime, nodeInventoryRecord) if nodeInventoryRecord         
           if @NODES_EMIT_STREAM_BATCH_SIZE > 0 && eventStream.count >= @NODES_EMIT_STREAM_BATCH_SIZE
             $log.info("in_kube_node::parse_and_emit_records: number of node inventory records emitted #{@NODES_EMIT_STREAM_BATCH_SIZE} @ #{Time.now.utc.iso8601}")
             router.emit_stream(@tag, eventStream) if eventStream
@@ -186,7 +187,7 @@ module Fluent::Plugin
 
           # container node inventory
           containerNodeInventoryRecord = getContainerNodeInventoryRecord(item, batchTime)         
-          containerNodeInventoryEventStream.add(Fluent::Engine.now, containerNodeInventoryRecord) if containerNodeInventoryRecord
+          containerNodeInventoryEventStream.add(emitTime, containerNodeInventoryRecord) if containerNodeInventoryRecord
 
           if @NODES_EMIT_STREAM_BATCH_SIZE > 0 && containerNodeInventoryEventStream.count >= @NODES_EMIT_STREAM_BATCH_SIZE
             $log.info("in_kube_node::parse_and_emit_records: number of container node inventory records emitted #{@NODES_EMIT_STREAM_BATCH_SIZE} @ #{Time.now.utc.iso8601}")
@@ -235,7 +236,7 @@ module Fluent::Plugin
             end
           end
           nodeMetricRecords.each do |metricRecord|          
-            kubePerfEventStream.add(Fluent::Engine.now, metricRecord) if metricRecord
+            kubePerfEventStream.add(emitTime, metricRecord) if metricRecord
           end
           if @NODES_EMIT_STREAM_BATCH_SIZE > 0 && kubePerfEventStream.count >= @NODES_EMIT_STREAM_BATCH_SIZE
             $log.info("in_kube_nodes::parse_and_emit_records: number of node perf metric records emitted #{@NODES_EMIT_STREAM_BATCH_SIZE} @ #{Time.now.utc.iso8601}")
@@ -265,7 +266,7 @@ module Fluent::Plugin
             nodeGPUInsightsMetricsRecords.push(insightsMetricsRecord)
           end
           nodeGPUInsightsMetricsRecords.each do |insightsMetricsRecord|            
-            insightsMetricsEventStream.add(Fluent::Engine.now, insightsMetricsRecord) if insightsMetricsRecord
+            insightsMetricsEventStream.add(emitTime, insightsMetricsRecord) if insightsMetricsRecord
           end
           if @NODES_EMIT_STREAM_BATCH_SIZE > 0 && insightsMetricsEventStream.count >= @NODES_EMIT_STREAM_BATCH_SIZE
             $log.info("in_kube_nodes::parse_and_emit_records: number of GPU node perf metric records emitted #{@NODES_EMIT_STREAM_BATCH_SIZE} @ #{Time.now.utc.iso8601}")

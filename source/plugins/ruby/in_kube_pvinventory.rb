@@ -110,7 +110,8 @@ module Fluent::Plugin
     end # end enumerate
 
     def parse_and_emit_records(pvInventory, batchTime = Time.utc.iso8601)
-      currentTime = Time.now      
+      currentTime = Time.now  
+      emitTime = Fluent::Engine.now    
       eventStream = Fluent::MultiEventStream.new
       @@istestvar = ENV["ISTEST"]
       begin
@@ -152,7 +153,7 @@ module Fluent::Plugin
 
         records.each do |record|
           if !record.nil?          
-            eventStream.add(Fluent::Engine.now, record) 
+            eventStream.add(emitTime, record) 
           end
         end
 

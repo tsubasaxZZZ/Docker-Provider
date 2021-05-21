@@ -52,6 +52,7 @@ module Fluent::Plugin
     def enumerate
       currentTime = Time.now      
       batchTime = currentTime.utc.iso8601
+      emitTime = Fluent::Engine.now
       containerInventory = Array.new
       eventStream = Fluent::MultiEventStream.new
       hostName = ""
@@ -93,7 +94,7 @@ module Fluent::Plugin
            end
         end        
         containerInventory.each do |record|         
-          eventStream.add(Fluent::Engine.now, record) if record
+          eventStream.add(emitTime, record) if record
         end
         router.emit_stream(@tag, eventStream) if eventStream
         @@istestvar = ENV["ISTEST"]

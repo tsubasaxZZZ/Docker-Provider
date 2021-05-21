@@ -89,7 +89,8 @@ module Fluent::Plugin
         return Fluent::MultiEventStream.new
     end
       begin
-        currentTime = Time.now        
+        currentTime = Time.now   
+        emitTime = Fluent::Engine.now     
         batchTime = currentTime.utc.iso8601
         health_monitor_records = []
         eventStream = Fluent::MultiEventStream.new
@@ -159,7 +160,7 @@ module Fluent::Plugin
         end
 
         health_monitor_records.each do |record|
-          eventStream.add(Fluent::Engine.now, record)
+          eventStream.add(emitTime, record)
         end
         router.emit_stream(@tag, eventStream) if eventStream
       rescue => errorStr

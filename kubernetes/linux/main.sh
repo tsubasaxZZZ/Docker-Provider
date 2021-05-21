@@ -1,5 +1,43 @@
 #!/bin/bash
 
+waitforlisteneronTCPport() {
+      local sleepdurationsecs=1
+      local totalsleptsecs=0
+      local port=$1
+      local waittimesecs=$2
+      local numeric='^[0-9]+$'
+      local varlistener=""
+
+      if [ -z "$1" ] || [ -z "$2" ]; then
+            echo "${FUNCNAME[0]} called with incorrect arguments<$1 , $2>. Required arguments <#port, #wait-time-in-seconds>"
+            return -1
+      else
+            
+            if [[ $port =~ $numeric ]] && [[ $waittimesecs =~ $numeric ]]; then
+                  #local varlistener=$(netstat -lnt | awk '$6 == "LISTEN" && $4 ~ ":25228$"')
+                  while true
+                  do
+                        if [ $totalsleptsecs -gt $waittimesecs ]; then
+                              echo "${FUNCNAME[0]} giving up waiting for listener on port:$port after $totalsleptsecs secs"
+                              return 1
+                        fi
+                        varlistener=$(netstat -lnt | awk '$6 == "LISTEN" && $4 ~ ":'"$port"'$"')
+                        if [ -z "$varlistener" ]; then
+                              #echo "${FUNCNAME[0]} waiting for $sleepdurationsecs more sec for listener on port:$port ..."
+                              sleep $sleepdurationsecs
+                              totalsleptsecs=$(($totalsleptsecs+1))
+                        else
+                              echo "${FUNCNAME[0]} found listener on port:$port in $totalsleptsecs secs"
+                              return 0
+                        fi
+                  done
+            else
+                  echo "${FUNCNAME[0]} called with non-numeric arguments<$1 , $2>. Required arguments <#port, #wait-time-in-seconds>"
+                  return -1
+            fi
+      fi
+}
+
 #using /var/opt/microsoft/docker-cimprov/state instead of /var/opt/microsoft/omsagent/state since the latter gets deleted during onboarding
 mkdir -p /var/opt/microsoft/docker-cimprov/state
 
@@ -547,6 +585,20 @@ echo "export HOST_ETC=/hostfs/etc" >> ~/.bashrc
 export HOST_VAR=/hostfs/var
 echo "export HOST_VAR=/hostfs/var" >> ~/.bashrc
 
+if [ ! -e "/etc/config/kube.conf" ]; then
+      if [ "${CONTAINER_TYPE}" == "PrometheusSidecar" ]; then
+            echo "checking for listener on tcp #25229 and waiting for 30 secs if not.."
+            waitforlisteneronTCPport 25229 30
+      else
+            echo "checking for listener on tcp #25226 and waiting for 30 secs if not.."
+            waitforlisteneronTCPport 25226 30
+            echo "checking for listener on tcp #25228 and waiting for 30 secs if not.."
+            waitforlisteneronTCPport 25228 30
+      fi
+else
+      echo "checking for listener on tcp #25226 and waiting for 30 secs if not.."
+      waitforlisteneronTCPport 25226 30
+fi
 
 #start telegraf
 /opt/telegraf --config $telegrafConfFile &

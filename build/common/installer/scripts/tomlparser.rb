@@ -166,7 +166,7 @@ def populateSettingValuesFromConfigMap(parsedConfig)
       if !parsedConfig[:log_collection_settings][:route_container_logs].nil? && !parsedConfig[:log_collection_settings][:route_container_logs][:version].nil?
         if !parsedConfig[:log_collection_settings][:route_container_logs][:version].empty?
            @containerLogsRoute = parsedConfig[:log_collection_settings][:route_container_logs][:version]
-           puts "config::Using config map setting for container logs route"
+           puts "config::Using config map setting for container logs route: #{@containerLogsRoute}"
         else 
            puts "config::Ignoring config map settings and using default value since provided container logs route value is empty"    
         end         

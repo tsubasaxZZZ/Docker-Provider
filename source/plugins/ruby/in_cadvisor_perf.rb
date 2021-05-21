@@ -57,17 +57,17 @@ module Fluent::Plugin
 
     def enumerate()
       currentTime = Time.now
-      time = currentTime.to_f
+      time = Fluent::Engine.now
       batchTime = currentTime.utc.iso8601
       @@istestvar = ENV["ISTEST"]
       begin
         eventStream = Fluent::MultiEventStream.new
         insightsMetricsEventStream = Fluent::MultiEventStream.new
-        metricData = CAdvisorMetricsAPIClient.getMetrics(winNode: nil, metricTime: batchTime)
-        metricData.each do |record|
-          eventStream.add(Fluent::Engine.now, record) if record
-        end
-
+        metricData = CAdvisorMetricsAPIClient.getMetrics(winNode: nil, metricTime: batchTime )
+        metricData.each do |record|          
+          eventStream.add(time, record) if record                  
+        end       
+        
         router.emit_stream(@tag, eventStream) if eventStream
         router.emit_stream(@mdmtag, eventStream) if eventStream
         router.emit_stream(@containerhealthtag, eventStream) if eventStream
@@ -83,9 +83,9 @@ module Fluent::Plugin
             containerGPUusageInsightsMetricsDataItems = []
             containerGPUusageInsightsMetricsDataItems.concat(CAdvisorMetricsAPIClient.getInsightsMetrics(winNode: nil, metricTime: batchTime))
 
-            containerGPUusageInsightsMetricsDataItems.each do |insightsMetricsRecord|
-              insightsMetricsEventStream.add(Fluent::Engine.now, insightsMetricsRecord) if insightsMetricsRecord
-            end
+          containerGPUusageInsightsMetricsDataItems.each do |insightsMetricsRecord|
+            insightsMetricsEventStream.add(time, insightsMetricsRecord) if insightsMetricsRecord
+          end
 
             router.emit_stream(@insightsmetricstag, insightsMetricsEventStream) if insightsMetricsEventStream
             router.emit_stream(@mdmtag, insightsMetricsEventStream) if insightsMetricsEventStream

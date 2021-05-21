@@ -286,7 +286,7 @@ module HealthModel
             def get_health_monitor_config
                 health_monitor_config = {}
                 begin
-                    file = File.open('/opt/microsoft/omsagent/plugin/healthmonitorconfig.json', "r")
+                    file = File.open('/etc/opt/microsoft/docker-cimprov/health/healthmonitorconfig.json', "r")
                     if !file.nil?
                         fileContents = file.read
                         health_monitor_config = JSON.parse(fileContents)

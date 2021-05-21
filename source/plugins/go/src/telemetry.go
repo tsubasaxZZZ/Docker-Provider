@@ -78,6 +78,8 @@ const (
 	metricNameNumberofSend429ErrorsTelegrafMetrics              = "TelegrafMetricsSend429ErrorCount"
 	metricNameErrorCountContainerLogsSendErrorsToMDSDFromFluent = "ContainerLogs2MdsdSendErrorCount"
 	metricNameErrorCountContainerLogsMDSDClientCreateError      = "ContainerLogsMdsdClientCreateErrorCount"
+	metricNameErrorCountInsightsMetricsMDSDClientCreateError    = "InsightsMetricsMDSDClientCreateErrorsCount"
+	metricNameErrorCountKubeMonEventsMDSDClientCreateError      = "KubeMonEventsMDSDClientCreateErrorsCount"
 	metricNameErrorCountContainerLogsSendErrorsToADXFromFluent  = "ContainerLogs2ADXSendErrorCount"
 	metricNameErrorCountContainerLogsADXClientCreateError       = "ContainerLogsADXClientCreateErrorCount"
 
@@ -116,6 +118,8 @@ func SendContainerLogPluginMetrics(telemetryPushIntervalProperty string) {
 		containerLogsMDSDClientCreateErrors := ContainerLogsMDSDClientCreateErrors
 		containerLogsSendErrorsToADXFromFluent := ContainerLogsSendErrorsToADXFromFluent
 		containerLogsADXClientCreateErrors := ContainerLogsADXClientCreateErrors
+		insightsMetricsMDSDClientCreateErrors := InsightsMetricsMDSDClientCreateErrors
+		kubeMonEventsMDSDClientCreateErrors := KubeMonEventsMDSDClientCreateErrors
 		osmNamespaceCount := OSMNamespaceCount
 		promMonitorPods := PromMonitorPods
 		promMonitorPodsNamespaceLength := PromMonitorPodsNamespaceLength
@@ -136,6 +140,8 @@ func SendContainerLogPluginMetrics(telemetryPushIntervalProperty string) {
 		ContainerLogsMDSDClientCreateErrors = 0.0
 		ContainerLogsSendErrorsToADXFromFluent = 0.0
 		ContainerLogsADXClientCreateErrors = 0.0
+		InsightsMetricsMDSDClientCreateErrors = 0.0
+		KubeMonEventsMDSDClientCreateErrors = 0.0
 		ContainerLogTelemetryMutex.Unlock()
 
 		if strings.Compare(strings.ToLower(os.Getenv("CONTROLLER_TYPE")), "daemonset") == 0 {
@@ -190,6 +196,13 @@ func SendContainerLogPluginMetrics(telemetryPushIntervalProperty string) {
 		if containerLogsADXClientCreateErrors > 0.0 {
 			TelemetryClient.Track(appinsights.NewMetricTelemetry(metricNameErrorCountContainerLogsADXClientCreateError, containerLogsADXClientCreateErrors))
 		}
+		if insightsMetricsMDSDClientCreateErrors > 0.0 {
+			TelemetryClient.Track(appinsights.NewMetricTelemetry(metricNameErrorCountInsightsMetricsMDSDClientCreateError, insightsMetricsMDSDClientCreateErrors))
+		}
+		if kubeMonEventsMDSDClientCreateErrors > 0.0 {
+			TelemetryClient.Track(appinsights.NewMetricTelemetry(metricNameErrorCountKubeMonEventsMDSDClientCreateError, kubeMonEventsMDSDClientCreateErrors))
+		}
+
 		start = time.Now()
 	}
 }

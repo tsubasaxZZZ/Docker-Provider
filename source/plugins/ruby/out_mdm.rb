@@ -203,7 +203,7 @@ module Fluent::Plugin
     end
 
     def write_status_file(success, message)
-      fn = "/var/opt/microsoft/omsagent/log/MDMIngestion.status"
+      fn = "/var/opt/microsoft/docker-cimprov/log/MDMIngestion.status"
       status = '{ "operation": "MDMIngestion", "success": "%s", "message": "%s" }' % [success, message]
       begin
         File.open(fn, "w") { |file| file.write(status) }
@@ -337,7 +337,7 @@ module Fluent::Plugin
           @log.info "Non-retryable HTTPClientException when POSTing Metrics to MDM #{e} Response: #{response}"
         else
           # raise if the response code is non-400
-          @log.info "HTTPClientException when POSTing Metrics to MDM #{e} Response: #{response}"
+          @log.info "HTTPServerException when POSTing Metrics to MDM #{e} Response: #{response}"
           raise e
         end
         # Adding exceptions to hash to aggregate and send telemetry for all 400 error codes

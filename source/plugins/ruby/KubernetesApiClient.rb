@@ -444,9 +444,6 @@ class KubernetesApiClient
             if (!container["resources"].nil? && !container["resources"].empty? && !container["resources"][metricCategory].nil? && !container["resources"][metricCategory][metricNameToCollect].nil?)
               metricValue = getMetricNumericValue(metricNameToCollect, container["resources"][metricCategory][metricNameToCollect])
 
-              # metricItem = {}
-              # metricItem["DataItems"] = []
-
               metricProps = {}
               metricProps["Timestamp"] = metricTime
               metricProps["Host"] = nodeName
@@ -470,9 +467,7 @@ class KubernetesApiClient
               if (metricCategory == "limits" && @@NodeMetrics.has_key?(nodeMetricsHashKey))
                 metricValue = @@NodeMetrics[nodeMetricsHashKey]
                 #@Log.info("Limits not set for container #{clusterId + "/" + podUid + "/" + containerName} using node level limits: #{nodeMetricsHashKey}=#{metricValue} ")
-                # metricItem = {}
-                # metricItem["DataItems"] = []
-
+                               
                 metricProps = {}
                 metricProps["Timestamp"] = metricTime
                 metricProps["Host"] = nodeName

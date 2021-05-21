@@ -185,9 +185,9 @@ module Fluent::Plugin
           metricItems.push(metricItem)
         end
 
-        time = Time.now.to_f
+        time = Fluent::Engine.now
         metricItems.each do |insightsMetricsRecord|        
-          insightsMetricsEventStream.add(Fluent::Engine.now, insightsMetricsRecord) if insightsMetricsRecord
+          insightsMetricsEventStream.add(time, insightsMetricsRecord) if insightsMetricsRecord
         end
 
         router.emit_stream(@tag, insightsMetricsEventStream) if insightsMetricsEventStream

@@ -339,6 +339,15 @@ const (
 	PromScrapingError
 )
 
+// DataType to be used as enum per data type socket client creation
+type DataType int 
+const (
+	// DataType to be used as enum per data type socket client creation
+	ContainerLogV2 DataType = iota
+	KubeMonAgentEvents 
+	InsightsMetrics 
+)
+
 func createLogger() *log.Logger {
 	var logfile *os.File
 
@@ -698,7 +707,7 @@ func flushKubeMonAgentEventRecords() {
 				msgpBytes := convertMsgPackEntriesToMsgpBytes(MdsdKubeMonAgentEventsTagName, msgPackEntries)							
 				if MdsdKubeMonMsgpUnixSocketClient == nil {
 					Log("Error::mdsd::mdsd connection for KubeMonAgentEvents does not exist. re-connecting ...")
-					CreateMDSDClientKubeMon(ContainerType)	
+					CreateMDSDClient(KubeMonAgentEvents, ContainerType)
 					if MdsdKubeMonMsgpUnixSocketClient == nil {
 						Log("Error::mdsd::Unable to create mdsd client for KubeMonAgentEvents. Please check error log.")					
 						ContainerLogTelemetryMutex.Lock()
@@ -899,7 +908,7 @@ func PostTelegrafMetricsToLA(telegrafRecords []map[interface{}]interface{}) int 
 				msgpBytes := convertMsgPackEntriesToMsgpBytes(MdsdInsightsMetricsTagName, msgPackEntries)			
 				if MdsdInsightsMetricsMsgpUnixSocketClient == nil {
 					Log("Error::mdsd::mdsd connection does not exist. re-connecting ...")
-					CreateMDSDClientInsightsMetrics(ContainerType)
+					CreateMDSDClient(InsightsMetrics, ContainerType)
 					if MdsdInsightsMetricsMsgpUnixSocketClient == nil {
 						Log("Error::mdsd::Unable to create mdsd client for insights metrics. Please check error log.")					
 						ContainerLogTelemetryMutex.Lock()
@@ -1203,7 +1212,7 @@ func PostDataHelper(tailPluginRecords []map[interface{}]interface{}) int {
 
 		if MdsdMsgpUnixSocketClient == nil {
 			Log("Error::mdsd::mdsd connection does not exist. re-connecting ...")
-			CreateMDSDClient(ContainerType)
+			CreateMDSDClient(ContainerLogV2, ContainerType)
 			if MdsdMsgpUnixSocketClient == nil {
 				Log("Error::mdsd::Unable to create mdsd client. Please check error log.")
 
@@ -1647,14 +1656,14 @@ func InitializePlugin(pluginConfPath string, agentVersion string) {
 	} else if strings.Compare(strings.ToLower(osType), "windows") != 0 { //for linux, oneagent will be default route		 
 		ContainerLogsRouteV2 = true  //default is mdsd route
 		if strings.Compare(ContainerLogsRoute, ContainerLogsV1Route) == 0 {			
-			ContainerLogsRouteV2 = false  //fallback option
+			ContainerLogsRouteV2 = false  //fallback option when hiddensetting set
 		}
-		Log("Routing container logs thru %s route...", ContainerLogsV2Route)
-		fmt.Fprintf(os.Stdout, "Routing container logs thru %s route... \n", ContainerLogsV2Route)
+		Log("Routing container logs thru %s route...", ContainerLogsRoute)
+		fmt.Fprintf(os.Stdout, "Routing container logs thru %s route... \n", ContainerLogsRoute)
 	} 
 
 	if ContainerLogsRouteV2 == true {
-		CreateMDSDClient(ContainerType)
+		CreateMDSDClient(ContainerLogV2, ContainerType)
 	} else if ContainerLogsRouteADX == true {
 		CreateADXClient()
 	} else { // v1 or windows
@@ -1664,8 +1673,8 @@ func InitializePlugin(pluginConfPath string, agentVersion string) {
 
 	if IsWindows == false { // mdsd linux specific
 		Log("Creating MDSD clients for KubeMonAgentEvents & InsightsMetrics")
-		CreateMDSDClientKubeMon(ContainerType)
-	    CreateMDSDClientInsightsMetrics(ContainerType) 
+		CreateMDSDClient(KubeMonAgentEvents, ContainerType)	
+		CreateMDSDClient(InsightsMetrics, ContainerType)
     }
 
 	ContainerLogSchemaVersion := strings.TrimSpace(strings.ToLower(os.Getenv("AZMON_CONTAINER_LOG_SCHEMA_VERSION")))
