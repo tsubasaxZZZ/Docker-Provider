@@ -808,6 +808,10 @@ spec:
           - mountPath: C:\etc\config\adx
             name: omsagent-adx-secret
             readOnly: true
+          # Need to mount this only for airgapped clouds
+          - mountPath: C:\ca
+            name: ca-certs
+            readOnly: true
          livenessProbe:
           exec:
             command:
@@ -839,6 +843,10 @@ spec:
       - name: docker-windows-kuberenetes-container-logs
         hostPath:
           path: C:\var
+      # Need to mount this only for airgapped clouds
+      - name: ca-certs
+        hostPath:
+          path: C:\ca
       - name: docker-windows-containers
         hostPath:
           path: C:\ProgramData\docker\containers
