@@ -119,6 +119,7 @@ function Set-EnvironmentVariables {
         $env:AZMON_AGENT_CFG_SCHEMA_VERSION
     }
 
+    # Need to do this before the SA fetch for AI key for airgapped clouds so that it is not overwritten with defaults.
     $appInsightsAuth = [System.Environment]::GetEnvironmentVariable("APPLICATIONINSIGHTS_AUTH", "process")
     if (![string]::IsNullOrEmpty($appInsightsAuth)) {
         [System.Environment]::SetEnvironmentVariable("APPLICATIONINSIGHTS_AUTH", $appInsightsAuth, "machine")
