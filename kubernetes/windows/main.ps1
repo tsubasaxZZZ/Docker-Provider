@@ -134,9 +134,6 @@ function Set-EnvironmentVariables {
         [System.Environment]::SetEnvironmentVariable("APPLICATIONINSIGHTS_ENDPOINT", $appInsightsEndpoint, "machine")
         Write-Host "Successfully set environment variable APPLICATIONINSIGHTS_ENDPOINT - $($appInsightsEndpoint) for target 'machine'..."
     }
-    else {
-        Write-Host "Failed to set environment variable APPLICATIONINSIGHTS_ENDPOINT for target 'machine' since it is either null or empty"
-    }
 
     # Check if the instrumentation key needs to be fetched from a storage account (as in airgapped clouds)
     $aiKeyURl = [System.Environment]::GetEnvironmentVariable('APPLICATIONINSIGHTS_AUTH_URL')
