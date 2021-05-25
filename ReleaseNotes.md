@@ -11,9 +11,15 @@ additional questions or comments.
 
 Note : The agent version(s) below has dates (ciprod<mmddyyyy>), which indicate the agent build dates (not release dates)
 
+### 05/20/2021 -
+##### Version microsoft/oms:ciprod05202021 Version mcr.microsoft.com/azuremonitor/containerinsights/ciprod:ciprod05202021 (linux)
+##### No Windows changes with this release, win-ciprod04222021 still current.
+##### Code change log
+- Telegraf now waits 30 seconds on startup for network connections to complete (Linux only)
+- Change adding telegraf to the liveness probe reverted (Linux only)
 
 ### 05/12/2021 -
-##### Version microsoft/oms:ciprod00512021 Version mcr.microsoft.com/azuremonitor/containerinsights/ciprod:ciprod05122021 (linux)
+##### Version microsoft/oms:ciprod05122021 Version mcr.microsoft.com/azuremonitor/containerinsights/ciprod:ciprod05122021 (linux)
 ##### No Windows changes with this release, win-ciprod04222021 still current.
 ##### Code change log
 - Upgrading oneagent to version 1.8 (only for Linux)

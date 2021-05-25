@@ -20,7 +20,7 @@ module Fluent::Plugin
       require_relative "CAdvisorMetricsAPIClient"
       require_relative "oms_common"
       require_relative "omslog"
-      require_relative "constants"
+      require_relative "constants"      
     end
 
     config_param :run_interval, :time, :default => 60
@@ -61,7 +61,7 @@ module Fluent::Plugin
       batchTime = currentTime.utc.iso8601
       @@istestvar = ENV["ISTEST"]
       begin
-        eventStream = Fluent::MultiEventStream.new
+        eventStream = Fluent::MultiEventStream.new      
         insightsMetricsEventStream = Fluent::MultiEventStream.new
         metricData = CAdvisorMetricsAPIClient.getMetrics(winNode: nil, metricTime: batchTime )
         metricData.each do |record|          
@@ -136,6 +136,6 @@ module Fluent::Plugin
         @mutex.lock
       end
       @mutex.unlock
-    end
+    end      
   end # CAdvisor_Perf_Input
 end # module
