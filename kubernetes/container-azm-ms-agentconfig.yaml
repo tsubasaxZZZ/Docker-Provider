@@ -135,6 +135,14 @@ data:
     [integrations.azure_network_policy_manager]
         collect_basic_metrics = false
         collect_advanced_metrics = false
+
+  agent-settings: |-
+    # prometheus scrape fluent bit settings for high scale  
+    [agent_settings.prometheus_fbit_settings]
+      tcp_listener_chunk_size = 10
+      tcp_listener_buffer_size = 10
+      tcp_listener_mem_buf_limit = 200
+
 metadata:
   name: container-azm-ms-agentconfig
   namespace: kube-system

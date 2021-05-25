@@ -13,6 +13,8 @@ require_relative "ConfigParseErrorLogger"
 @configMapMountPath = "/etc/config/settings/agent-settings"
 @configSchemaVersion = ""
 @enable_health_model = false
+@containerType = ENV["CONTAINER_TYPE"]
+@promSideCar = "prometheussidecar"
 
 # 250 Node items (15KB per node) account to approximately 4MB
 @nodesChunkSize = 250
@@ -59,7 +61,6 @@ require_relative "ConfigParseErrorLogger"
 @fbitFlushIntervalSecs = 0
 @fbitTailBufferChunkSizeMBs = 0
 @fbitTailBufferMaxSizeMBs = 0
-
 
 def is_number?(value)
   true if Integer(value) rescue false
@@ -153,7 +154,7 @@ def populateSettingValuesFromConfigMap(parsedConfig)
         end
 
         fbitTailBufferMaxSizeMBs = fbit_config[:tail_buf_maxsize_megabytes]
-        if !fbitTailBufferMaxSizeMBs.nil? && is_number?(fbitTailBufferMaxSizeMBs) && fbitTailBufferMaxSizeMBs.to_i > 0           
+        if !fbitTailBufferMaxSizeMBs.nil? && is_number?(fbitTailBufferMaxSizeMBs) && fbitTailBufferMaxSizeMBs.to_i > 0
           if fbitTailBufferMaxSizeMBs.to_i >= @fbitTailBufferChunkSizeMBs
             @fbitTailBufferMaxSizeMBs = fbitTailBufferMaxSizeMBs.to_i
             puts "Using config map value: tail_buf_maxsize_megabytes = #{@fbitTailBufferMaxSizeMBs}"
@@ -164,10 +165,17 @@ def populateSettingValuesFromConfigMap(parsedConfig)
           end
         end
         # in scenario - tail_buf_chunksize_megabytes provided but not tail_buf_maxsize_megabytes to prevent fbit crash
-        if  @fbitTailBufferChunkSizeMBs > 0  && @fbitTailBufferMaxSizeMBs == 0
+        if @fbitTailBufferChunkSizeMBs > 0 && @fbitTailBufferMaxSizeMBs == 0
           @fbitTailBufferMaxSizeMBs = @fbitTailBufferChunkSizeMBs
           puts "config::warn: since tail_buf_maxsize_megabytes not provided hence using tail_buf_maxsize_megabytes=#{@fbitTailBufferMaxSizeMBs} which is same as the value of tail_buf_chunksize_megabytes"
-        end 
+        end
+      end
+
+      # fbit config settings
+      if (!@containerType.nil? && @containerType.casecmp(@promSideCar) == 0)
+        prom_fbit_config = parsedConfig[:agent_settings][:prometheus_fbit_settings]
+        if !prom_fbit_config.nil?
+        end
       end
     end
   rescue => errorStr
@@ -211,7 +219,7 @@ if !file.nil?
   end
   if @fbitTailBufferMaxSizeMBs > 0
     file.write("export FBIT_TAIL_BUFFER_MAX_SIZE=#{@fbitTailBufferMaxSizeMBs}\n")
-  end 
+  end
   # Close file after writing all environment variables
   file.close
 else
