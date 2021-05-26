@@ -62,6 +62,10 @@ require_relative "ConfigParseErrorLogger"
 @fbitTailBufferChunkSizeMBs = 0
 @fbitTailBufferMaxSizeMBs = 0
 
+@promFbitChunkSize = 10
+@promFbitBufferSize = 10
+@promFbitMemBufLimit = 200
+
 def is_number?(value)
   true if Integer(value) rescue false
 end
@@ -175,6 +179,21 @@ def populateSettingValuesFromConfigMap(parsedConfig)
       if (!@containerType.nil? && @containerType.casecmp(@promSideCar) == 0)
         prom_fbit_config = parsedConfig[:agent_settings][:prometheus_fbit_settings]
         if !prom_fbit_config.nil?
+          chunk_size = prom_fbit_config[:tcp_listener_chunk_size]
+          if !chunk_size.nil? && is_number?(chunk_size) && chunk_size.to_i > 0
+            @promFbitChunkSize = chunk_size.to_i
+          end
+          buffer_size = prom_fbit_config[:tcp_listener_buffer_size]
+          if !buffer_size.nil? && is_number?(buffer_size) && buffer_size.to_i > 0
+            @promFbitBufferSize = buffer_size.to_i
+            if @promFbitBufferSize < @promFbitChunkSize
+              @promFbitBufferSize = @promFbitChunkSize
+            end
+          end
+          mem_buf_limit = prom_fbit_config[:tcp_listener_mem_buf_limit]
+          if !mem_buf_limit.nil? && is_number?(mem_buf_limit) && mem_buf_limit.to_i > 0
+            @promFbitMemBufLimit = mem_buf_limit.to_i
+          end
         end
       end
     end
