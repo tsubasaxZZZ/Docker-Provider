@@ -1,7 +1,7 @@
 #!/usr/local/bin/ruby
 # frozen_string_literal: true
 
-require 'fluent/plugin/input'
+require "fluent/plugin/input"
 
 module Fluent::Plugin
   class Win_CAdvisor_Perf_Input < Input
@@ -20,7 +20,7 @@ module Fluent::Plugin
       require_relative "oms_common"
       require_relative "omslog"
       require_relative "constants"
-      @insightsMetricsTag = "oneagent.containerInsights.INSIGHTS_METRICS_BLOB" 
+      @insightsMetricsTag = "oneagent.containerInsights.INSIGHTS_METRICS_BLOB"
     end
 
     config_param :run_interval, :time, :default => 60
@@ -57,7 +57,7 @@ module Fluent::Plugin
       begin
         timeDifference = (DateTime.now.to_time.to_i - @@winNodeQueryTimeTracker).abs
         timeDifferenceInMinutes = timeDifference / 60
-        @@istestvar = ENV["ISTEST"]             
+        @@istestvar = ENV["ISTEST"]
 
         #Resetting this cache so that it is populated with the current set of containers with every call
         CAdvisorMetricsAPIClient.resetWinContainerIdCache()
@@ -79,7 +79,6 @@ module Fluent::Plugin
             end
           end
           router.emit_stream(@tag, eventStream) if eventStream
-          router.emit_stream(@mdmtag, eventStream) if eventStream
 
           if (!@@istestvar.nil? && !@@istestvar.empty? && @@istestvar.casecmp("true") == 0 && eventStream.count > 0)
             $log.info("winCAdvisorPerfEmitStreamSuccess @ #{Time.now.utc.iso8601}")
@@ -89,10 +88,10 @@ module Fluent::Plugin
           begin
             containerGPUusageInsightsMetricsDataItems = []
             containerGPUusageInsightsMetricsDataItems.concat(CAdvisorMetricsAPIClient.getInsightsMetrics(winNode: winNode, metricTime: Time.now.utc.iso8601))
-            insightsMetricsEventStream = Fluent::MultiEventStream.new            
+            insightsMetricsEventStream = Fluent::MultiEventStream.new
 
             containerGPUusageInsightsMetricsDataItems.each do |insightsMetricsRecord|
-              insightsMetricsEventStream.add(time, insightsMetricsRecord) if insightsMetricsRecord             
+              insightsMetricsEventStream.add(time, insightsMetricsRecord) if insightsMetricsRecord
             end
 
             router.emit_stream(@insightsMetricsTag, insightsMetricsEventStream) if insightsMetricsEventStream
