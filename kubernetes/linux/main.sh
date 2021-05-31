@@ -306,6 +306,21 @@ if [ -e "telemetry_prom_config_env_var" ]; then
       source telemetry_prom_config_env_var
 fi
 
+#Parse sidecar agent settings for custom configuration
+if [ ! -e "/etc/config/kube.conf" ]; then
+      if [ "${CONTAINER_TYPE}" == "PrometheusSidecar" ]; then
+            #Parse the agent configmap to create a file with new custom settings.
+            /usr/bin/ruby2.6 tomlparser-prom-agent-config.rb
+            #Sourcing config environment variable file if it exists
+            if [ -e "side_car_fbit_config_env_var" ]; then
+                  cat side_car_fbit_config_env_var | while read line; do
+                        echo $line >> ~/.bashrc
+                  done
+                  source side_car_fbit_config_env_var
+            fi
+      fi
+fi
+
 
 #Parse the configmap to set the right environment variables for MDM metrics configuration for Alerting.
 if [ "${CONTAINER_TYPE}" != "PrometheusSidecar" ]; then
