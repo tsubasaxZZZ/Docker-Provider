@@ -44,7 +44,7 @@ sudo echo "deb https://packages.fluentbit.io/ubuntu/xenial xenial main" >> /etc/
 sudo apt-get update
 sudo apt-get install td-agent-bit=1.6.8 -y
 
-# install ruby2.6 
+# install ruby2.6
 sudo apt-get install software-properties-common -y
 sudo apt-add-repository ppa:brightbox/ruby-ng -y
 sudo apt-get update

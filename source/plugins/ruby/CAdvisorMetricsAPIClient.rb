@@ -38,7 +38,12 @@ class CAdvisorMetricsAPIClient
   @npmIntegrationBasic = ENV["TELEMETRY_NPM_INTEGRATION_METRICS_BASIC"]
   @npmIntegrationAdvanced = ENV["TELEMETRY_NPM_INTEGRATION_METRICS_ADVANCED"]
 
-  @LogPath = "/var/opt/microsoft/docker-cimprov/log/kubernetes_perf_log.txt"
+  @os_type = ENV["OS_TYPE"]
+  if !@os_type.nil? && !@os_type.empty? && @os_type.strip.casecmp("windows") == 0
+    @LogPath = "/etc/omsagentwindows/kubernetes_perf_log.txt"
+  else
+    @LogPath = "/var/opt/microsoft/docker-cimprov/log/kubernetes_perf_log.txt"
+  end
   @Log = Logger.new(@LogPath, 2, 10 * 1048576) #keep last 2 files, max log file size = 10M
   #   @@rxBytesLast = nil
   #   @@rxBytesTimeLast = nil
@@ -142,39 +147,54 @@ class CAdvisorMetricsAPIClient
           operatingSystem = "Linux"
         end
         if !metricInfo.nil?
-          metricDataItems.concat(getContainerMemoryMetricItems(metricInfo, hostName, "workingSetBytes", Constants::MEMORY_WORKING_SET_BYTES, metricTime, operatingSystem))
-          metricDataItems.concat(getContainerStartTimeMetricItems(metricInfo, hostName, "restartTimeEpoch", metricTime))
-
-          if operatingSystem == "Linux"
-            metricDataItems.concat(getContainerCpuMetricItems(metricInfo, hostName, "usageNanoCores", Constants::CPU_USAGE_NANO_CORES, metricTime))
-            metricDataItems.concat(getContainerMemoryMetricItems(metricInfo, hostName, "rssBytes", Constants::MEMORY_RSS_BYTES, metricTime, operatingSystem))
-            metricDataItems.push(getNodeMetricItem(metricInfo, hostName, "memory", "rssBytes", Constants::MEMORY_RSS_BYTES, metricTime))
-          elsif operatingSystem == "Windows"
+          # Checking if we are in windows daemonset and sending only few metrics that are needed for MDM
+          if !@os_type.nil? && !@os_type.empty? && @os_type.strip.casecmp("windows") == 0
+            # Container metrics
+            metricDataItems.concat(getContainerMemoryMetricItems(metricInfo, hostName, "workingSetBytes", Constants::MEMORY_WORKING_SET_BYTES, metricTime, operatingSystem))
             containerCpuUsageNanoSecondsRate = getContainerCpuMetricItemRate(metricInfo, hostName, "usageCoreNanoSeconds", Constants::CPU_USAGE_NANO_CORES, metricTime)
             if containerCpuUsageNanoSecondsRate && !containerCpuUsageNanoSecondsRate.empty? && !containerCpuUsageNanoSecondsRate.nil?
               metricDataItems.concat(containerCpuUsageNanoSecondsRate)
             end
+            # Node metrics
+            cpuUsageNanoSecondsRate = getNodeMetricItemRate(metricInfo, hostName, "cpu", "usageCoreNanoSeconds", Constants::CPU_USAGE_NANO_CORES, operatingSystem, metricTime)
+            if cpuUsageNanoSecondsRate && !cpuUsageNanoSecondsRate.empty? && !cpuUsageNanoSecondsRate.nil?
+              metricDataItems.push(cpuUsageNanoSecondsRate)
+            end
+            metricDataItems.push(getNodeMetricItem(metricInfo, hostName, "memory", "workingSetBytes", Constants::MEMORY_WORKING_SET_BYTES, metricTime))
+          else
+            metricDataItems.concat(getContainerMemoryMetricItems(metricInfo, hostName, "workingSetBytes", Constants::MEMORY_WORKING_SET_BYTES, metricTime, operatingSystem))
+            metricDataItems.concat(getContainerStartTimeMetricItems(metricInfo, hostName, "restartTimeEpoch", metricTime))
+
+            if operatingSystem == "Linux"
+              metricDataItems.concat(getContainerCpuMetricItems(metricInfo, hostName, "usageNanoCores", Constants::CPU_USAGE_NANO_CORES, metricTime))
+              metricDataItems.concat(getContainerMemoryMetricItems(metricInfo, hostName, "rssBytes", Constants::MEMORY_RSS_BYTES, metricTime, operatingSystem))
+              metricDataItems.push(getNodeMetricItem(metricInfo, hostName, "memory", "rssBytes", Constants::MEMORY_RSS_BYTES, metricTime))
+            elsif operatingSystem == "Windows"
+              containerCpuUsageNanoSecondsRate = getContainerCpuMetricItemRate(metricInfo, hostName, "usageCoreNanoSeconds", Constants::CPU_USAGE_NANO_CORES, metricTime)
+              if containerCpuUsageNanoSecondsRate && !containerCpuUsageNanoSecondsRate.empty? && !containerCpuUsageNanoSecondsRate.nil?
+                metricDataItems.concat(containerCpuUsageNanoSecondsRate)
+              end
+            end
+
+            cpuUsageNanoSecondsRate = getNodeMetricItemRate(metricInfo, hostName, "cpu", "usageCoreNanoSeconds", Constants::CPU_USAGE_NANO_CORES, operatingSystem, metricTime)
+            if cpuUsageNanoSecondsRate && !cpuUsageNanoSecondsRate.empty? && !cpuUsageNanoSecondsRate.nil?
+              metricDataItems.push(cpuUsageNanoSecondsRate)
+            end
+            metricDataItems.push(getNodeMetricItem(metricInfo, hostName, "memory", "workingSetBytes", Constants::MEMORY_WORKING_SET_BYTES, metricTime))
+
+            metricDataItems.push(getNodeLastRebootTimeMetric(metricInfo, hostName, "restartTimeEpoch", metricTime))
+            # Disabling networkRxRate and networkTxRate since we dont use it as of now.
+            #metricDataItems.push(getNodeMetricItem(metricInfo, hostName, "network", "rxBytes", "networkRxBytes"))
+            #metricDataItems.push(getNodeMetricItem(metricInfo, hostName, "network", "txBytes", "networkTxBytes"))
+            #   networkRxRate = getNodeMetricItemRate(metricInfo, hostName, "network", "rxBytes", "networkRxBytesPerSec")
+            #   if networkRxRate && !networkRxRate.empty? && !networkRxRate.nil?
+            #     metricDataItems.push(networkRxRate)
+            #   end
+            #   networkTxRate = getNodeMetricItemRate(metricInfo, hostName, "network", "txBytes", "networkTxBytesPerSec")
+            #   if networkTxRate && !networkTxRate.empty? && !networkTxRate.nil?
+            #     metricDataItems.push(networkTxRate)
+            #   end
           end
-
-          cpuUsageNanoSecondsRate = getNodeMetricItemRate(metricInfo, hostName, "cpu", "usageCoreNanoSeconds", Constants::CPU_USAGE_NANO_CORES, operatingSystem, metricTime)
-          if cpuUsageNanoSecondsRate && !cpuUsageNanoSecondsRate.empty? && !cpuUsageNanoSecondsRate.nil?
-            metricDataItems.push(cpuUsageNanoSecondsRate)
-          end
-          metricDataItems.push(getNodeMetricItem(metricInfo, hostName, "memory", "workingSetBytes", Constants::MEMORY_WORKING_SET_BYTES, metricTime))
-
-          metricDataItems.push(getNodeLastRebootTimeMetric(metricInfo, hostName, "restartTimeEpoch", metricTime))
-
-          # Disabling networkRxRate and networkTxRate since we dont use it as of now.
-          #metricDataItems.push(getNodeMetricItem(metricInfo, hostName, "network", "rxBytes", "networkRxBytes"))
-          #metricDataItems.push(getNodeMetricItem(metricInfo, hostName, "network", "txBytes", "networkTxBytes"))
-          #   networkRxRate = getNodeMetricItemRate(metricInfo, hostName, "network", "rxBytes", "networkRxBytesPerSec")
-          #   if networkRxRate && !networkRxRate.empty? && !networkRxRate.nil?
-          #     metricDataItems.push(networkRxRate)
-          #   end
-          #   networkTxRate = getNodeMetricItemRate(metricInfo, hostName, "network", "txBytes", "networkTxBytesPerSec")
-          #   if networkTxRate && !networkTxRate.empty? && !networkTxRate.nil?
-          #     metricDataItems.push(networkTxRate)
-          #   end
         else
           @Log.warn("Couldn't get metric information for host: #{hostName}")
         end
@@ -203,7 +223,6 @@ class CAdvisorMetricsAPIClient
               containerName = container["name"]
               metricValue = container["cpu"][cpuMetricNameToCollect]
               metricTime = metricPollTime #container["cpu"]["time"]
-             
 
               metricItem = {}
               metricItem["Timestamp"] = metricTime

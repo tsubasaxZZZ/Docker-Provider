@@ -1,16 +1,20 @@
 #!/usr/local/bin/ruby
 # frozen_string_literal: true
-require 'fluent/plugin/input'
+require "fluent/plugin/input"
 
 module Fluent::Plugin
-
   class CAdvisor_Perf_Input < Input
     Fluent::Plugin.register_input("cadvisor_perf", self)
+    @@isWindows = false
+    @@os_type = ENV["OS_TYPE"]
+    if !@@os_type.nil? && !@@os_type.empty? && @@os_type.strip.casecmp("windows") == 0
+      @@isWindows = true
+    end
 
     def initialize
       super
       require "yaml"
-      require 'yajl/json_gem'
+      require "yajl/json_gem"
       require "time"
 
       require_relative "CAdvisorMetricsAPIClient"
@@ -69,31 +73,32 @@ module Fluent::Plugin
         router.emit_stream(@containerhealthtag, eventStream) if eventStream
         router.emit_stream(@nodehealthtag, eventStream) if eventStream
 
-        
         if (!@@istestvar.nil? && !@@istestvar.empty? && @@istestvar.casecmp("true") == 0 && eventStream.count > 0)
           $log.info("cAdvisorPerfEmitStreamSuccess @ #{Time.now.utc.iso8601}")
         end
 
         #start GPU InsightsMetrics items
         begin
-          containerGPUusageInsightsMetricsDataItems = []
-          containerGPUusageInsightsMetricsDataItems.concat(CAdvisorMetricsAPIClient.getInsightsMetrics(winNode: nil, metricTime: batchTime))          
+          if !@@isWindows.nil? && @@isWindows == false
+            containerGPUusageInsightsMetricsDataItems = []
+            containerGPUusageInsightsMetricsDataItems.concat(CAdvisorMetricsAPIClient.getInsightsMetrics(winNode: nil, metricTime: batchTime))
 
           containerGPUusageInsightsMetricsDataItems.each do |insightsMetricsRecord|
             insightsMetricsEventStream.add(time, insightsMetricsRecord) if insightsMetricsRecord
           end
 
-          router.emit_stream(@insightsmetricstag, insightsMetricsEventStream) if insightsMetricsEventStream
-          router.emit_stream(@mdmtag, insightsMetricsEventStream) if insightsMetricsEventStream
-          
-          if (!@@istestvar.nil? && !@@istestvar.empty? && @@istestvar.casecmp("true") == 0 && insightsMetricsEventStream.count > 0)
-            $log.info("cAdvisorInsightsMetricsEmitStreamSuccess @ #{Time.now.utc.iso8601}")
+            router.emit_stream(@insightsmetricstag, insightsMetricsEventStream) if insightsMetricsEventStream
+            router.emit_stream(@mdmtag, insightsMetricsEventStream) if insightsMetricsEventStream
+
+            if (!@@istestvar.nil? && !@@istestvar.empty? && @@istestvar.casecmp("true") == 0 && insightsMetricsEventStream.count > 0)
+              $log.info("cAdvisorInsightsMetricsEmitStreamSuccess @ #{Time.now.utc.iso8601}")
+            end
           end
         rescue => errorStr
           $log.warn "Failed when processing GPU Usage metrics in_cadvisor_perf : #{errorStr}"
           $log.debug_backtrace(errorStr.backtrace)
           ApplicationInsightsUtility.sendExceptionTelemetry(errorStr)
-        end 
+        end
         #end GPU InsightsMetrics items
 
       rescue => errorStr

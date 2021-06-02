@@ -2,7 +2,7 @@
 
 # frozen_string_literal: true
 
-require 'fluent/plugin/filter'
+require "fluent/plugin/filter"
 
 module Fluent::Plugin
   require "logger"
@@ -27,6 +27,12 @@ module Fluent::Plugin
 
     @@metric_threshold_hash = {}
     @@controller_type = ""
+
+    @@isWindows = false
+    @@os_type = ENV["OS_TYPE"]
+    if !@@os_type.nil? && !@@os_type.empty? && @@os_type.strip.casecmp("windows") == 0
+      @@isWindows = true
+    end
 
     def initialize
       super
@@ -130,15 +136,17 @@ module Fluent::Plugin
 
       # Also send for PV usage metrics
       begin
-        pvTimeDifference = (DateTime.now.to_time.to_i - @@pvUsageTelemetryTimeTracker).abs
-        pvTimeDifferenceInMinutes = pvTimeDifference / 60
-        if (pvTimeDifferenceInMinutes >= Constants::TELEMETRY_FLUSH_INTERVAL_IN_MINUTES)
-          pvProperties = {}
-          pvProperties["PVUsageThresholdPercentage"] = @@metric_threshold_hash[Constants::PV_USED_BYTES]
-          pvProperties["PVUsageThresholdExceededInLastFlushInterval"] = @pvExceededUsageThreshold
-          ApplicationInsightsUtility.sendCustomEvent(Constants::PV_USAGE_HEART_BEAT_EVENT, pvProperties)
-          @pvExceededUsageThreshold = false
-          @@pvUsageTelemetryTimeTracker = DateTime.now.to_time.to_i
+        if !@@isWindows.nil? && @@isWindows == false
+          pvTimeDifference = (DateTime.now.to_time.to_i - @@pvUsageTelemetryTimeTracker).abs
+          pvTimeDifferenceInMinutes = pvTimeDifference / 60
+          if (pvTimeDifferenceInMinutes >= Constants::TELEMETRY_FLUSH_INTERVAL_IN_MINUTES)
+            pvProperties = {}
+            pvProperties["PVUsageThresholdPercentage"] = @@metric_threshold_hash[Constants::PV_USED_BYTES]
+            pvProperties["PVUsageThresholdExceededInLastFlushInterval"] = @pvExceededUsageThreshold
+            ApplicationInsightsUtility.sendCustomEvent(Constants::PV_USAGE_HEART_BEAT_EVENT, pvProperties)
+            @pvExceededUsageThreshold = false
+            @@pvUsageTelemetryTimeTracker = DateTime.now.to_time.to_i
+          end
         end
       rescue => errorStr
         @log.info "Error in flushMetricTelemetry: #{errorStr} for PV usage telemetry"
@@ -346,7 +354,6 @@ module Fluent::Plugin
           # cpu_capacity and memory_capacity keep initialized value of 0.0
           @log.error "Error getting capacity_from_kubelet: cpu_capacity and memory_capacity"
         end
-
       end
     end
 

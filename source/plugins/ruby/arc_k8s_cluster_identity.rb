@@ -18,15 +18,20 @@ class ArcK8sClusterIdentity
   @@crd_resource_uri_template = "%{kube_api_server_url}/apis/%{cluster_config_crd_api_version}/namespaces/%{cluster_identity_resource_namespace}/azureclusteridentityrequests/%{cluster_identity_resource_name}"
   @@secret_resource_uri_template = "%{kube_api_server_url}/api/v1/namespaces/%{cluster_identity_token_secret_namespace}/secrets/%{token_secret_name}"
   @@azure_monitor_custom_metrics_audience = "https://monitoring.azure.com/"
-  @@cluster_identity_request_kind = "AzureClusterIdentityRequest" 
+  @@cluster_identity_request_kind = "AzureClusterIdentityRequest"
 
   def initialize
-    @LogPath = "/var/opt/microsoft/docker-cimprov/log/arc_k8s_cluster_identity.log"
+    @os_type = ENV["OS_TYPE"]
+    if !@os_type.nil? && !@os_type.empty? && @os_type.strip.casecmp("windows") == 0
+      @LogPath = "/etc/omsagentwindows/arc_k8s_cluster_identity.log"
+    else
+      @LogPath = "/var/opt/microsoft/docker-cimprov/log/arc_k8s_cluster_identity.log"
+    end
     @log = Logger.new(@LogPath, 1, 5000000)
     @log.info "initialize start @ #{Time.now.utc.iso8601}"
     @token_expiry_time = Time.now
     @cached_access_token = String.new
-    @isLastTokenRenewalUpdatePending = false 
+    @isLastTokenRenewalUpdatePending = false
     @token_file_path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
     @cert_file_path = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
     @kube_api_server_url = KubernetesApiClient.getKubeAPIServerUrl
@@ -34,8 +39,8 @@ class ArcK8sClusterIdentity
       @log.warn "got api server url nil from KubernetesApiClient.getKubeAPIServerUrl @ #{Time.now.utc.iso8601}"
     end
     @http_client = get_http_client
-    @service_account_token = get_service_account_token 
-    @extensionName = ENV["ARC_K8S_EXTENSION_NAME"]   
+    @service_account_token = get_service_account_token
+    @extensionName = ENV["ARC_K8S_EXTENSION_NAME"]
     @log.info "extension name:#{@extensionName} @ #{Time.now.utc.iso8601}"
     @log.info "initialize complete @ #{Time.now.utc.iso8601}"
   end
@@ -55,7 +60,7 @@ class ArcK8sClusterIdentity
             @isLastTokenRenewalUpdatePending = true
           else
             @log.warn "last token renewal update still pending @ #{Time.now.utc.iso8601}"
-          end 
+          end
         end
         @log.info "get token reference from crd @ #{Time.now.utc.iso8601}"
         tokenReference = get_token_reference_from_crd
@@ -68,7 +73,7 @@ class ArcK8sClusterIdentity
           token = get_token_from_secret(token_secret_name, token_secret_data_name)
           if !token.nil?
             @cached_access_token = token
-            @isLastTokenRenewalUpdatePending = false 
+            @isLastTokenRenewalUpdatePending = false
           else
             @log.warn "got token nil from secret: #{@token_secret_name}"
           end
@@ -141,7 +146,7 @@ class ArcK8sClusterIdentity
         create_request.body = crd_request_body_json
         create_response = @http_client.request(create_request)
         @log.info "Got response of #{create_response.code} for POST #{crd_request_uri} @ #{Time.now.utc.iso8601}"
-      end      
+      end
     rescue => err
       @log.warn "get_token_reference_from_crd call failed: #{err}"
       ApplicationInsightsUtility.sendExceptionTelemetry(err, { "FeatureArea" => "MDM" })
@@ -159,7 +164,7 @@ class ArcK8sClusterIdentity
         cluster_identity_resource_namespace: @@cluster_identity_resource_namespace,
         cluster_identity_resource_name: @@cluster_identity_resource_name,
       }
-      update_crd_request_body = { 'status': {'expirationTime': ''} }
+      update_crd_request_body = { 'status': { 'expirationTime': "" } }
       update_crd_request_body_json = update_crd_request_body.to_json
       update_crd_request_uri = crd_request_uri + "/status"
       update_request = Net::HTTP::Patch.new(update_crd_request_uri)
@@ -234,9 +239,9 @@ class ArcK8sClusterIdentity
     body["metadata"]["namespace"] = @@cluster_identity_resource_namespace
     body["spec"] = {}
     body["spec"]["audience"] = @@azure_monitor_custom_metrics_audience
-    if !@extensionName.nil? && !@extensionName.empty? 
-        body["spec"]["resourceId"] = @extensionName      
-    end 
+    if !@extensionName.nil? && !@extensionName.empty?
+      body["spec"]["resourceId"] = @extensionName
+    end
     return body
   end
 end

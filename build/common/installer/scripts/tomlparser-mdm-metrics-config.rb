@@ -1,9 +1,16 @@
 #!/usr/local/bin/ruby
 # frozen_string_literal: true
 
-require_relative "tomlrb"
-require_relative "ConfigParseErrorLogger"
+#this should be require relative in Linux and require in windows, since it is a gem install on windows
+@os_type = ENV["OS_TYPE"]
+if !@os_type.nil? && !@os_type.empty? && @os_type.strip.casecmp("windows") == 0
+  require "tomlrb"
+else
+  require_relative "tomlrb"
+end
+
 require_relative "/etc/fluent/plugin/constants"
+require_relative "ConfigParseErrorLogger"
 
 @configMapMountPath = "/etc/config/settings/alertable-metrics-configuration-settings"
 @configVersion = ""
@@ -124,6 +131,10 @@ def populateSettingValuesFromConfigMap(parsedConfig)
   end
 end
 
+def get_command_windows(env_variable_name, env_variable_value)
+  return "[System.Environment]::SetEnvironmentVariable(\"#{env_variable_name}\", \"#{env_variable_value}\", \"Process\")" + "\n" + "[System.Environment]::SetEnvironmentVariable(\"#{env_variable_name}\", \"#{env_variable_value}\", \"Machine\")" + "\n"
+end
+
 @configSchemaVersion = ENV["AZMON_AGENT_CFG_SCHEMA_VERSION"]
 puts "****************Start MDM Metrics Config Processing********************"
 if !@configSchemaVersion.nil? && !@configSchemaVersion.empty? && @configSchemaVersion.strip.casecmp("v1") == 0 #note v1 is the only supported schema version, so hardcoding it
@@ -137,19 +148,37 @@ else
   end
 end
 
-# Write the settings to file, so that they can be set as environment variables
-file = File.open("config_mdm_metrics_env_var", "w")
+if !@os_type.nil? && !@os_type.empty? && @os_type.strip.casecmp("windows") == 0
+  # Write the settings to file, so that they can be set as environment variables in windows container
+  file = File.open("setmdmenv.ps1", "w")
 
-if !file.nil?
-  file.write("export AZMON_ALERT_CONTAINER_CPU_THRESHOLD=#{@percentageCpuUsageThreshold}\n")
-  file.write("export AZMON_ALERT_CONTAINER_MEMORY_RSS_THRESHOLD=#{@percentageMemoryRssThreshold}\n")
-  file.write("export AZMON_ALERT_CONTAINER_MEMORY_WORKING_SET_THRESHOLD=\"#{@percentageMemoryWorkingSetThreshold}\"\n")
-  file.write("export AZMON_ALERT_PV_USAGE_THRESHOLD=#{@percentagePVUsageThreshold}\n")
-  file.write("export AZMON_ALERT_JOB_COMPLETION_TIME_THRESHOLD=#{@jobCompletionThresholdMinutes}\n")
-  # Close file after writing all MDM setting environment variables
-  file.close
-  puts "****************End MDM Metrics Config Processing********************"
+  if !file.nil?
+    commands = get_command_windows("AZMON_ALERT_CONTAINER_CPU_THRESHOLD", @percentageCpuUsageThreshold)
+    file.write(commands)
+    commands = get_command_windows("AZMON_ALERT_CONTAINER_MEMORY_WORKING_SET_THRESHOLD", @percentageMemoryWorkingSetThreshold)
+    file.write(commands)
+    # Close file after writing all environment variables
+    file.close
+    puts "****************End MDM Metrics Config Processing********************"
+  else
+    puts "Exception while opening file for writing MDM metric config environment variables"
+    puts "****************End MDM Metrics Config Processing********************"
+  end
 else
-  puts "Exception while opening file for writing MDM metric config environment variables"
-  puts "****************End MDM Metrics Config Processing********************"
+  # Write the settings to file, so that they can be set as environment variables in linux container
+  file = File.open("config_mdm_metrics_env_var", "w")
+
+  if !file.nil?
+    file.write("export AZMON_ALERT_CONTAINER_CPU_THRESHOLD=#{@percentageCpuUsageThreshold}\n")
+    file.write("export AZMON_ALERT_CONTAINER_MEMORY_RSS_THRESHOLD=#{@percentageMemoryRssThreshold}\n")
+    file.write("export AZMON_ALERT_CONTAINER_MEMORY_WORKING_SET_THRESHOLD=\"#{@percentageMemoryWorkingSetThreshold}\"\n")
+    file.write("export AZMON_ALERT_PV_USAGE_THRESHOLD=#{@percentagePVUsageThreshold}\n")
+    file.write("export AZMON_ALERT_JOB_COMPLETION_TIME_THRESHOLD=#{@jobCompletionThresholdMinutes}\n")
+    # Close file after writing all MDM setting environment variables
+    file.close
+    puts "****************End MDM Metrics Config Processing********************"
+  else
+    puts "Exception while opening file for writing MDM metric config environment variables"
+    puts "****************End MDM Metrics Config Processing********************"
+  end
 end
