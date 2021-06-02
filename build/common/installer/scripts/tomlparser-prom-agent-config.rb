@@ -50,17 +50,21 @@ def populateSettingValuesFromConfigMap(parsedConfig)
         chunk_size = prom_fbit_config[:tcp_listener_chunk_size]
         if !chunk_size.nil? && is_number?(chunk_size) && chunk_size.to_i > 0
           @promFbitChunkSize = chunk_size.to_i
+          puts "Using config map value: AZMON_SIDECAR_FBIT_CHUNK_SIZE = #{@promFbitChunkSize.to_s + "m"}"
         end
         buffer_size = prom_fbit_config[:tcp_listener_buffer_size]
         if !buffer_size.nil? && is_number?(buffer_size) && buffer_size.to_i > 0
           @promFbitBufferSize = buffer_size.to_i
+          puts "Using config map value: AZMON_SIDECAR_FBIT_BUFFER_SIZE = #{@promFbitBufferSize.to_s + "m"}"
           if @promFbitBufferSize < @promFbitChunkSize
             @promFbitBufferSize = @promFbitChunkSize
+            puts "Setting Fbit buffer size equal to chunk size since it is set to less than chunk size - AZMON_SIDECAR_FBIT_BUFFER_SIZE = #{@promFbitBufferSize.to_s + "m"}"
           end
         end
         mem_buf_limit = prom_fbit_config[:tcp_listener_mem_buf_limit]
         if !mem_buf_limit.nil? && is_number?(mem_buf_limit) && mem_buf_limit.to_i > 0
           @promFbitMemBufLimit = mem_buf_limit.to_i
+          puts "Using config map value: AZMON_SIDECAR_FBIT_MEM_BUF_LIMIT = #{@promFbitMemBufLimit.to_s + "m"}"
         end
       end
     end
