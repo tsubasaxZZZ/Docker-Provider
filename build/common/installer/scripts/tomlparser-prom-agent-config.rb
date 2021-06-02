@@ -87,9 +87,9 @@ end
 file = File.open("side_car_fbit_config_env_var", "w")
 
 if !file.nil?
-  file.write("export AZMON_SIDECAR_FBIT_CHUNK_SIZE=#{@promFbitChunkSize + "m"}\n")
-  file.write("export AZMON_SIDECAR_FBIT_BUFFER_SIZE=#{@promFbitBufferSize + "m"}\n")
-  file.write("export AZMON_SIDECAR_FBIT_MEM_BUF_LIMIT=#{@promFbitMemBufLimit + "m"}\n")
+  file.write("export AZMON_SIDECAR_FBIT_CHUNK_SIZE=#{@promFbitChunkSize.to_s + "m"}\n")
+  file.write("export AZMON_SIDECAR_FBIT_BUFFER_SIZE=#{@promFbitBufferSize.to_s + "m"}\n")
+  file.write("export AZMON_SIDECAR_FBIT_MEM_BUF_LIMIT=#{@promFbitMemBufLimit.to_s + "m"}\n")
   # Close file after writing all environment variables
   file.close
 else
