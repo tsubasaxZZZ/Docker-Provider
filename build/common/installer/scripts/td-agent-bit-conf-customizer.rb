@@ -6,6 +6,7 @@ require_relative "ConfigParseErrorLogger"
 @default_service_interval = "1"
 @default_buffer_chunk_size = "1"
 @default_buffer_max_size = "1"
+@default_mem_buf_limit = "10"
 
 def is_number?(value)
   true if Integer(value) rescue false
@@ -19,6 +20,7 @@ def substituteFluentBitPlaceHolders
     interval = ENV["FBIT_SERVICE_FLUSH_INTERVAL"]
     bufferChunkSize = ENV["FBIT_TAIL_BUFFER_CHUNK_SIZE"]
     bufferMaxSize = ENV["FBIT_TAIL_BUFFER_MAX_SIZE"]
+    memBufLimit = ENV["FBIT_TAIL_MEM_BUF_LIMIT"]
 
     serviceInterval = (!interval.nil? && is_number?(interval) && interval.to_i > 0 ) ? interval : @default_service_interval
     serviceIntervalSetting = "Flush         " + serviceInterval
@@ -32,8 +34,12 @@ def substituteFluentBitPlaceHolders
       tailBufferMaxSize = tailBufferChunkSize
     end
 
+    tailMemBufLimit = (!memBufLimit.nil? && is_number?(memBufLimit) && memBufLimit.to_i > 10) ? memBufLimit : @default_mem_buf_limit
+    tailMemBufLimitSetting = "Mem_Buf_Limit " + tailMemBufLimit + "m"
+
     text = File.read(@td_agent_bit_conf_path)
     new_contents = text.gsub("${SERVICE_FLUSH_INTERVAL}", serviceIntervalSetting)
+    new_contents = new_contents.gsub("${TAIL_MEM_BUF_LIMIT}", tailMemBufLimitSetting)
     if !tailBufferChunkSize.nil?
       new_contents = new_contents.gsub("${TAIL_BUFFER_CHUNK_SIZE}", "Buffer_Chunk_Size " + tailBufferChunkSize + "m")
     else

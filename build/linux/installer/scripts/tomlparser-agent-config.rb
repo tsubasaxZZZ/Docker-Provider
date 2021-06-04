@@ -59,6 +59,7 @@ require_relative "ConfigParseErrorLogger"
 @fbitFlushIntervalSecs = 0
 @fbitTailBufferChunkSizeMBs = 0
 @fbitTailBufferMaxSizeMBs = 0
+@fbitTailMemBufLimitMBs = 0
 
 
 def is_number?(value)
@@ -168,6 +169,12 @@ def populateSettingValuesFromConfigMap(parsedConfig)
           @fbitTailBufferMaxSizeMBs = @fbitTailBufferChunkSizeMBs
           puts "config::warn: since tail_buf_maxsize_megabytes not provided hence using tail_buf_maxsize_megabytes=#{@fbitTailBufferMaxSizeMBs} which is same as the value of tail_buf_chunksize_megabytes"
         end 
+
+        fbitTailMemBufLimitMBs = fbit_config[:tail_mem_buf_limit_megabytes]
+        if !fbitTailMemBufLimitMBs.nil? && is_number?(fbitTailMemBufLimitMBs) && fbitTailMemBufLimitMBs.to_i > 0
+          @fbitTailMemBufLimitMBs = fbitTailMemBufLimitMBs.to_i
+          puts "Using config map value: tail_mem_buf_limit_megabytes  = #{@fbitTailMemBufLimitMBs}"
+        end
       end
     end
   rescue => errorStr
@@ -211,6 +218,9 @@ if !file.nil?
   end
   if @fbitTailBufferMaxSizeMBs > 0
     file.write("export FBIT_TAIL_BUFFER_MAX_SIZE=#{@fbitTailBufferMaxSizeMBs}\n")
+  end 
+  if @fbitTailMemBufLimitMBs > 0
+    file.write("export FBIT_TAIL_MEM_BUF_LIMIT=#{@fbitTailMemBufLimitMBs}\n")
   end 
   # Close file after writing all environment variables
   file.close
